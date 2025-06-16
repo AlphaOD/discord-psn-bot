@@ -144,11 +144,11 @@ class PSNApi {
         try {
             this.logger.debug(`Searching for PSN user: ${username}`);
             
-            const searchResults = await this.withTimeout(makeUniversalSearch(
+            const searchResults = await makeUniversalSearch(
                 { accessToken },
                 username,
                 'SocialAllAccounts'
-            ));
+            );
             
             return searchResults;
             
@@ -169,14 +169,14 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching games for account ID: ${accountId}`);
             
-            const titles = await this.withTimeout(getUserTitles(
+            const titles = await getUserTitles(
                 { accessToken },
                 accountId,
                 {
                     limit,
                     offset: 0
                 }
-            ));
+            );
             
             return titles.trophyTitles.map(title => ({
                 npCommunicationId: title.npCommunicationId,
@@ -209,14 +209,14 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching trophies for game: ${npCommunicationId}`);
             
-            const trophies = await this.withTimeout(getTitleTrophies(
+            const trophies = await getTitleTrophies(
                 { accessToken },
                 npCommunicationId,
                 'all',
                 {
                     npServiceName: 'trophy'
                 }
-            ));
+            );
             
             return trophies.trophies.map(trophy => ({
                 trophyId: trophy.trophyId,
@@ -250,7 +250,7 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching user trophies for game: ${npCommunicationId}`);
             
-            const userTrophies = await this.withTimeout(getUserTrophyGroupEarningsForTitle(
+            const userTrophies = await getUserTrophyGroupEarningsForTitle(
                 { accessToken },
                 accountId,
                 npCommunicationId,
@@ -258,7 +258,7 @@ class PSNApi {
                 {
                     npServiceName: 'trophy'
                 }
-            ));
+            );
             
             return {
                 npCommunicationId,

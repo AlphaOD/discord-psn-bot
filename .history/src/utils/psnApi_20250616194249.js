@@ -54,11 +54,11 @@ class PSNApi {
         try {
             this.logger.info('Authenticating with PSN using NPSSO token');
             
-            // Exchange NPSSO for authorization code with timeout
-            const authCode = await this.withTimeout(exchangeNpssoForCode(npssoToken));
+            // Exchange NPSSO for authorization code
+            const authCode = await exchangeNpssoForCode(npssoToken);
             
-            // Exchange code for access tokens with timeout
-            const authTokens = await this.withTimeout(exchangeCodeForAccessToken(authCode));
+            // Exchange code for access tokens
+            const authTokens = await exchangeCodeForAccessToken(authCode);
             
             this.logger.info('PSN authentication successful');
             
@@ -84,7 +84,7 @@ class PSNApi {
         try {
             this.logger.debug('Refreshing PSN access token');
             
-            const authTokens = await this.withTimeout(exchangeRefreshTokenForAuthTokens(refreshToken));
+            const authTokens = await exchangeRefreshTokenForAuthTokens(refreshToken);
             
             return {
                 accessToken: authTokens.accessToken,
@@ -109,10 +109,10 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching profile for account ID: ${accountId}`);
             
-            const profile = await this.withTimeout(getUserProfileFromAccountId(
+            const profile = await getUserProfileFromAccountId(
                 { accessToken },
                 accountId
-            ));
+            );
             
             return {
                 accountId: profile.accountId,
@@ -144,11 +144,11 @@ class PSNApi {
         try {
             this.logger.debug(`Searching for PSN user: ${username}`);
             
-            const searchResults = await this.withTimeout(makeUniversalSearch(
+            const searchResults = await makeUniversalSearch(
                 { accessToken },
                 username,
                 'SocialAllAccounts'
-            ));
+            );
             
             return searchResults;
             
@@ -169,14 +169,14 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching games for account ID: ${accountId}`);
             
-            const titles = await this.withTimeout(getUserTitles(
+            const titles = await getUserTitles(
                 { accessToken },
                 accountId,
                 {
                     limit,
                     offset: 0
                 }
-            ));
+            );
             
             return titles.trophyTitles.map(title => ({
                 npCommunicationId: title.npCommunicationId,
@@ -209,14 +209,14 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching trophies for game: ${npCommunicationId}`);
             
-            const trophies = await this.withTimeout(getTitleTrophies(
+            const trophies = await getTitleTrophies(
                 { accessToken },
                 npCommunicationId,
                 'all',
                 {
                     npServiceName: 'trophy'
                 }
-            ));
+            );
             
             return trophies.trophies.map(trophy => ({
                 trophyId: trophy.trophyId,
@@ -250,7 +250,7 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching user trophies for game: ${npCommunicationId}`);
             
-            const userTrophies = await this.withTimeout(getUserTrophyGroupEarningsForTitle(
+            const userTrophies = await getUserTrophyGroupEarningsForTitle(
                 { accessToken },
                 accountId,
                 npCommunicationId,
@@ -258,7 +258,7 @@ class PSNApi {
                 {
                     npServiceName: 'trophy'
                 }
-            ));
+            );
             
             return {
                 npCommunicationId,

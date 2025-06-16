@@ -119,24 +119,10 @@ function setupTrophyChecker() {
     cron.schedule('*/30 * * * *', async () => {
         try {
             logger.info('Starting scheduled trophy check...');
-            
-            // Add timeout protection to prevent hanging cron jobs
-            await Promise.race([
-                client.trophyTracker.checkAllUsers(),
-                new Promise((_, reject) => {
-                    setTimeout(() => {
-                        reject(new Error('Scheduled trophy check timed out after 10 minutes'));
-                    }, 600000); // 10 minute timeout for scheduled checks
-                })
-            ]);
-            
+            await client.trophyTracker.checkAllUsers();
             logger.info('Scheduled trophy check completed');
         } catch (error) {
-            if (error.message.includes('timed out')) {
-                logger.warn('Scheduled trophy check timed out - PSN may be slow');
-            } else {
-                logger.error('Error during scheduled trophy check:', error);
-            }
+            logger.error('Error during scheduled trophy check:', error);
         }
     });
     

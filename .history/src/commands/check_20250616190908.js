@@ -67,32 +67,9 @@ module.exports = {
             
             await interaction.editReply({ embeds: [checkingEmbed] });
             
-            // Perform trophy check with timeout protection
+            // Perform trophy check
             const checkStartTime = Date.now();
-            try {
-                // Add timeout wrapper to prevent hanging requests
-                await Promise.race([
-                    trophyTracker.checkUserTrophies(userData),
-                    new Promise((_, reject) => {
-                        setTimeout(() => {
-                            reject(new Error('Trophy check timed out after 60 seconds'));
-                        }, 60000); // 60 second timeout
-                    })
-                ]);
-            } catch (timeoutError) {
-                if (timeoutError.message.includes('timed out')) {
-                    logger.warn(`Trophy check timed out for user ${interaction.user.id}`);
-                    const timeoutEmbed = new EmbedBuilder()
-                        .setTitle('⏰ Check Timed Out')
-                        .setDescription('The trophy check took too long and was cancelled to prevent issues.\n\nThis usually happens when PlayStation Network is slow. Please try again later.')
-                        .setColor(0xFFAA00)
-                        .setTimestamp();
-                    
-                    await interaction.editReply({ embeds: [timeoutEmbed] });
-                    return;
-                }
-                throw timeoutError; // Re-throw if it's not a timeout error
-            }
+            await trophyTracker.checkUserTrophies(userData);
             const checkDuration = Date.now() - checkStartTime;
             
             // Get updated statistics with error handling

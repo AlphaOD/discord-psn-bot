@@ -250,7 +250,7 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching user trophies for game: ${npCommunicationId}`);
             
-            const userTrophies = await this.withTimeout(getUserTrophyGroupEarningsForTitle(
+            const userTrophies = await getUserTrophyGroupEarningsForTitle(
                 { accessToken },
                 accountId,
                 npCommunicationId,
@@ -258,7 +258,7 @@ class PSNApi {
                 {
                     npServiceName: 'trophy'
                 }
-            ));
+            );
             
             return {
                 npCommunicationId,
