@@ -24,8 +24,8 @@ const cron = require('node-cron');
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        GatewayIntentBits.GuildMessages,
-        GatewayIntentBits.MessageContent,
+        // Note: MessageContent intent removed to avoid privileged intent requirement
+        // The bot works with slash commands only, which don't need MessageContent
     ]
 });
 
