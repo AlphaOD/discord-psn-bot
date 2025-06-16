@@ -44,13 +44,8 @@ module.exports = {
             userData = await database.getUser(interaction.user.id);
         } catch (dbError) {
             logger.error('Database error checking user:', dbError);
-            
-            const errorMessage = dbError.message.includes('no such table') 
-                ? '❌ Database not properly initialized. Please contact an administrator.'
-                : '❌ Database error occurred. Please try again later.';
-            
             await interaction.reply({
-                content: errorMessage,
+                content: '❌ Database error occurred. Please try again later.',
                 ephemeral: true
             });
             return;

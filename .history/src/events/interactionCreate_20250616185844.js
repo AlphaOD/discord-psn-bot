@@ -273,21 +273,16 @@ async function handlePSNTokenModal(interaction) {
         // Get user profile to get account ID and username
         const profile = await psnApi.getUserProfile(authTokens.accessToken, 'me');
         
-        // Save user to database with error handling
-        try {
-            await database.saveUser({
-                discordId: interaction.user.id,
-                psnUsername: profile.onlineId,
-                psnAccountId: profile.accountId,
-                npssoToken: npssoToken,
-                accessToken: authTokens.accessToken,
-                refreshToken: authTokens.refreshToken,
-                tokenExpiresAt: authTokens.expiresAt
-            });
-        } catch (dbError) {
-            logger.error('Error saving user to database:', dbError);
-            throw new Error('Failed to save account information to database');
-        }
+        // Save user to database
+        await database.saveUser({
+            discordId: interaction.user.id,
+            psnUsername: profile.onlineId,
+            psnAccountId: profile.accountId,
+            npssoToken: npssoToken,
+            accessToken: authTokens.accessToken,
+            refreshToken: authTokens.refreshToken,
+            tokenExpiresAt: authTokens.expiresAt
+        });
         
         logger.info(`PSN account linked: ${interaction.user.tag} -> ${profile.onlineId}`);
         

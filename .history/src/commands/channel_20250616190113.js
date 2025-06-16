@@ -44,13 +44,8 @@ module.exports = {
             userData = await database.getUser(interaction.user.id);
         } catch (dbError) {
             logger.error('Database error checking user:', dbError);
-            
-            const errorMessage = dbError.message.includes('no such table') 
-                ? '❌ Database not properly initialized. Please contact an administrator.'
-                : '❌ Database error occurred. Please try again later.';
-            
             await interaction.reply({
-                content: errorMessage,
+                content: '❌ Database error occurred. Please try again later.',
                 ephemeral: true
             });
             return;
@@ -102,21 +97,12 @@ async function handleSetChannel(interaction, database, logger) {
         return;
     }
     
-    // Save notification settings with error handling
-    try {
-        await database.run(`
-            INSERT OR REPLACE INTO notification_settings 
-            (discord_id, trophy_notifications, platinum_notifications, channel_id)
-            VALUES (?, 1, 1, ?)
-        `, [userId, channel.id]);
-    } catch (dbError) {
-        logger.error('Database error saving notification settings:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while saving settings. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    // Save notification settings
+    await database.run(`
+        INSERT OR REPLACE INTO notification_settings 
+        (discord_id, trophy_notifications, platinum_notifications, channel_id)
+        VALUES (?, 1, 1, ?)
+    `, [userId, channel.id]);
     
     const embed = new EmbedBuilder()
         .setTitle('✅ Notification Channel Set')
@@ -160,20 +146,11 @@ async function handleSetChannel(interaction, database, logger) {
 async function handleRemoveChannel(interaction, database, logger) {
     const userId = interaction.user.id;
     
-    try {
-        await database.run(`
-            UPDATE notification_settings 
-            SET channel_id = NULL, trophy_notifications = 0, platinum_notifications = 0
-            WHERE discord_id = ?
-        `, [userId]);
-    } catch (dbError) {
-        logger.error('Database error removing notification settings:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while removing settings. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    await database.run(`
+        UPDATE notification_settings 
+        SET channel_id = NULL, trophy_notifications = 0, platinum_notifications = 0
+        WHERE discord_id = ?
+    `, [userId]);
     
     const embed = new EmbedBuilder()
         .setTitle('❌ Notifications Disabled')
@@ -199,19 +176,9 @@ async function handleRemoveChannel(interaction, database, logger) {
 async function handleChannelInfo(interaction, database, logger) {
     const userId = interaction.user.id;
     
-    let settings;
-    try {
-        settings = await database.get(`
-            SELECT * FROM notification_settings WHERE discord_id = ?
-        `, [userId]);
-    } catch (dbError) {
-        logger.error('Database error fetching notification settings:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while fetching settings. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    const settings = await database.get(`
+        SELECT * FROM notification_settings WHERE discord_id = ?
+    `, [userId]);
     
     let channelInfo = 'Not configured';
     let statusColor = 0xFF6B6B;

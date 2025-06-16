@@ -160,12 +160,8 @@ process.on('SIGINT', async () => {
     
     try {
         if (client.database) {
-            try {
-                await client.database.close();
-                logger.info('✅ Database connection closed');
-            } catch (dbError) {
-                logger.error('❌ Error closing database:', dbError);
-            }
+            await client.database.close();
+            logger.info('✅ Database connection closed');
         }
         
         client.destroy();

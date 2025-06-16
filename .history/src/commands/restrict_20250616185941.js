@@ -210,21 +210,11 @@ async function handleClearRestrictions(interaction, database, logger) {
 async function handleListRestrictions(interaction, database, logger) {
     const guildId = interaction.guild.id;
     
-    let restrictions;
-    try {
-        restrictions = await database.all(`
-            SELECT channel_id FROM server_settings 
-            WHERE guild_id = ? AND setting_type = 'allowed_channel'
-            ORDER BY created_at
-        `, [guildId]);
-    } catch (dbError) {
-        logger.error('Database error in handleListRestrictions:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while fetching restrictions. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    const restrictions = await database.all(`
+        SELECT channel_id FROM server_settings 
+        WHERE guild_id = ? AND setting_type = 'allowed_channel'
+        ORDER BY created_at
+    `, [guildId]);
     
     let description;
     let color;

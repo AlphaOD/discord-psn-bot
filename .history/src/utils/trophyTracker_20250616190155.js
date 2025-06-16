@@ -111,11 +111,7 @@ class TrophyTracker {
             }
             
             // Update last check timestamp
-            try {
-                await this.database.updateLastTrophyCheck(user.discord_id);
-            } catch (dbError) {
-                this.logger.error(`Database error updating last trophy check for user ${user.discord_id}:`, dbError);
-            }
+            await this.database.updateLastTrophyCheck(user.discord_id);
             
         } catch (error) {
             this.logger.error(`Error checking trophies for ${user.psn_username}:`, error.message);
@@ -143,12 +139,7 @@ class TrophyTracker {
                 notified: false
             };
             
-            try {
-                await this.database.saveTrophy(trophyData);
-            } catch (dbError) {
-                this.logger.error(`Database error saving trophy for user ${user.discord_id}:`, dbError);
-                throw dbError; // Re-throw to handle in parent function
-            }
+            await this.database.saveTrophy(trophyData);
             this.logger.debug(`Saved trophy: ${trophy.trophyName} for ${user.psn_username}`);
             
         } catch (error) {
@@ -169,16 +160,10 @@ class TrophyTracker {
             }
             
             // Get notification settings
-            let settings;
-            try {
-                settings = await this.database.get(
-                    'SELECT * FROM notification_settings WHERE discord_id = ?',
-                    [user.discord_id]
-                );
-            } catch (dbError) {
-                this.logger.error(`Database error fetching notification settings for user ${user.discord_id}:`, dbError);
-                return;
-            }
+            const settings = await this.database.get(
+                'SELECT * FROM notification_settings WHERE discord_id = ?',
+                [user.discord_id]
+            );
             
             const channelId = settings?.channel_id;
             if (!channelId) {
@@ -347,25 +332,20 @@ class TrophyTracker {
                 const newTokens = await this.psnApi.refreshAccessToken(user.refresh_token);
                 
                 // Update tokens in database
-                try {
-                    await this.database.run(
-                        `UPDATE users SET 
-                            access_token = ?, 
-                            refresh_token = ?, 
-                            token_expires_at = ?,
-                            updated_at = strftime('%s', 'now')
-                        WHERE discord_id = ?`,
-                        [
-                            newTokens.accessToken,
-                            newTokens.refreshToken,
-                            newTokens.expiresAt,
-                            user.discord_id
-                        ]
-                    );
-                } catch (dbError) {
-                    this.logger.error(`Database error updating tokens for user ${user.discord_id}:`, dbError);
-                    throw dbError;
-                }
+                await this.database.run(
+                    `UPDATE users SET 
+                        access_token = ?, 
+                        refresh_token = ?, 
+                        token_expires_at = ?,
+                        updated_at = strftime('%s', 'now')
+                    WHERE discord_id = ?`,
+                    [
+                        newTokens.accessToken,
+                        newTokens.refreshToken,
+                        newTokens.expiresAt,
+                        user.discord_id
+                    ]
+                );
                 
                 return newTokens.accessToken;
             }
@@ -386,30 +366,17 @@ class TrophyTracker {
      */
     async getUserTrophyStats(discordId) {
         try {
-            let stats;
-            try {
-                stats = await this.database.get(`
-                    SELECT 
-                        COUNT(*) as total_trophies,
-                        COUNT(CASE WHEN trophy_type = 'platinum' THEN 1 END) as platinum_count,
-                        COUNT(CASE WHEN trophy_type = 'gold' THEN 1 END) as gold_count,
-                        COUNT(CASE WHEN trophy_type = 'silver' THEN 1 END) as silver_count,
-                        COUNT(CASE WHEN trophy_type = 'bronze' THEN 1 END) as bronze_count,
-                        COUNT(DISTINCT game_id) as games_played
-                    FROM trophies 
-                    WHERE discord_id = ?
-                `, [discordId]);
-            } catch (dbError) {
-                this.logger.error(`Database error fetching trophy stats for user ${discordId}:`, dbError);
-                return {
-                    total_trophies: 0,
-                    platinum_count: 0,
-                    gold_count: 0,
-                    silver_count: 0,
-                    bronze_count: 0,
-                    games_played: 0
-                };
-            }
+            const stats = await this.database.get(`
+                SELECT 
+                    COUNT(*) as total_trophies,
+                    COUNT(CASE WHEN trophy_type = 'platinum' THEN 1 END) as platinum_count,
+                    COUNT(CASE WHEN trophy_type = 'gold' THEN 1 END) as gold_count,
+                    COUNT(CASE WHEN trophy_type = 'silver' THEN 1 END) as silver_count,
+                    COUNT(CASE WHEN trophy_type = 'bronze' THEN 1 END) as bronze_count,
+                    COUNT(DISTINCT game_id) as games_played
+                FROM trophies 
+                WHERE discord_id = ?
+            `, [discordId]);
             
             return stats || {
                 total_trophies: 0,
@@ -422,14 +389,7 @@ class TrophyTracker {
             
         } catch (error) {
             this.logger.error('Error fetching trophy stats:', error.message);
-            return {
-                total_trophies: 0,
-                platinum_count: 0,
-                gold_count: 0,
-                silver_count: 0,
-                bronze_count: 0,
-                games_played: 0
-            };
+            return null;
         }
     }
 

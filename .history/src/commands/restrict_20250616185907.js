@@ -80,31 +80,22 @@ async function handleAddRestriction(interaction, database, logger) {
     const channel = interaction.options.getChannel('channel');
     const guildId = interaction.guild.id;
     
-    try {
-        // Create server_settings table if it doesn't exist
-        await database.run(`
-            CREATE TABLE IF NOT EXISTS server_settings (
-                guild_id TEXT,
-                channel_id TEXT,
-                setting_type TEXT,
-                created_at INTEGER DEFAULT (strftime('%s', 'now')),
-                PRIMARY KEY (guild_id, channel_id, setting_type)
-            )
-        `);
-        
-        // Add channel restriction
-        await database.run(`
-            INSERT OR IGNORE INTO server_settings (guild_id, channel_id, setting_type)
-            VALUES (?, ?, 'allowed_channel')
-        `, [guildId, channel.id]);
-    } catch (dbError) {
-        logger.error('Database error in handleAddRestriction:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while adding restriction. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    // Create server_settings table if it doesn't exist
+    await database.run(`
+        CREATE TABLE IF NOT EXISTS server_settings (
+            guild_id TEXT,
+            channel_id TEXT,
+            setting_type TEXT,
+            created_at INTEGER DEFAULT (strftime('%s', 'now')),
+            PRIMARY KEY (guild_id, channel_id, setting_type)
+        )
+    `);
+    
+    // Add channel restriction
+    await database.run(`
+        INSERT OR IGNORE INTO server_settings (guild_id, channel_id, setting_type)
+        VALUES (?, ?, 'allowed_channel')
+    `, [guildId, channel.id]);
     
     const embed = new EmbedBuilder()
         .setTitle('✅ Channel Restriction Added')
@@ -131,20 +122,10 @@ async function handleRemoveRestriction(interaction, database, logger) {
     const channel = interaction.options.getChannel('channel');
     const guildId = interaction.guild.id;
     
-    let result;
-    try {
-        result = await database.run(`
-            DELETE FROM server_settings 
-            WHERE guild_id = ? AND channel_id = ? AND setting_type = 'allowed_channel'
-        `, [guildId, channel.id]);
-    } catch (dbError) {
-        logger.error('Database error in handleRemoveRestriction:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while removing restriction. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    const result = await database.run(`
+        DELETE FROM server_settings 
+        WHERE guild_id = ? AND channel_id = ? AND setting_type = 'allowed_channel'
+    `, [guildId, channel.id]);
     
     if (result.changes === 0) {
         await interaction.reply({
@@ -171,20 +152,10 @@ async function handleRemoveRestriction(interaction, database, logger) {
 async function handleClearRestrictions(interaction, database, logger) {
     const guildId = interaction.guild.id;
     
-    let result;
-    try {
-        result = await database.run(`
-            DELETE FROM server_settings 
-            WHERE guild_id = ? AND setting_type = 'allowed_channel'
-        `, [guildId]);
-    } catch (dbError) {
-        logger.error('Database error in handleClearRestrictions:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while clearing restrictions. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    const result = await database.run(`
+        DELETE FROM server_settings 
+        WHERE guild_id = ? AND setting_type = 'allowed_channel'
+    `, [guildId]);
     
     const embed = new EmbedBuilder()
         .setTitle('🔓 All Restrictions Cleared')
@@ -210,21 +181,11 @@ async function handleClearRestrictions(interaction, database, logger) {
 async function handleListRestrictions(interaction, database, logger) {
     const guildId = interaction.guild.id;
     
-    let restrictions;
-    try {
-        restrictions = await database.all(`
-            SELECT channel_id FROM server_settings 
-            WHERE guild_id = ? AND setting_type = 'allowed_channel'
-            ORDER BY created_at
-        `, [guildId]);
-    } catch (dbError) {
-        logger.error('Database error in handleListRestrictions:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while fetching restrictions. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    const restrictions = await database.all(`
+        SELECT channel_id FROM server_settings 
+        WHERE guild_id = ? AND setting_type = 'allowed_channel'
+        ORDER BY created_at
+    `, [guildId]);
     
     let description;
     let color;

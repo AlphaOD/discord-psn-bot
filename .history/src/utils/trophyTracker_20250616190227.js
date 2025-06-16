@@ -386,30 +386,17 @@ class TrophyTracker {
      */
     async getUserTrophyStats(discordId) {
         try {
-            let stats;
-            try {
-                stats = await this.database.get(`
-                    SELECT 
-                        COUNT(*) as total_trophies,
-                        COUNT(CASE WHEN trophy_type = 'platinum' THEN 1 END) as platinum_count,
-                        COUNT(CASE WHEN trophy_type = 'gold' THEN 1 END) as gold_count,
-                        COUNT(CASE WHEN trophy_type = 'silver' THEN 1 END) as silver_count,
-                        COUNT(CASE WHEN trophy_type = 'bronze' THEN 1 END) as bronze_count,
-                        COUNT(DISTINCT game_id) as games_played
-                    FROM trophies 
-                    WHERE discord_id = ?
-                `, [discordId]);
-            } catch (dbError) {
-                this.logger.error(`Database error fetching trophy stats for user ${discordId}:`, dbError);
-                return {
-                    total_trophies: 0,
-                    platinum_count: 0,
-                    gold_count: 0,
-                    silver_count: 0,
-                    bronze_count: 0,
-                    games_played: 0
-                };
-            }
+            const stats = await this.database.get(`
+                SELECT 
+                    COUNT(*) as total_trophies,
+                    COUNT(CASE WHEN trophy_type = 'platinum' THEN 1 END) as platinum_count,
+                    COUNT(CASE WHEN trophy_type = 'gold' THEN 1 END) as gold_count,
+                    COUNT(CASE WHEN trophy_type = 'silver' THEN 1 END) as silver_count,
+                    COUNT(CASE WHEN trophy_type = 'bronze' THEN 1 END) as bronze_count,
+                    COUNT(DISTINCT game_id) as games_played
+                FROM trophies 
+                WHERE discord_id = ?
+            `, [discordId]);
             
             return stats || {
                 total_trophies: 0,
@@ -422,14 +409,7 @@ class TrophyTracker {
             
         } catch (error) {
             this.logger.error('Error fetching trophy stats:', error.message);
-            return {
-                total_trophies: 0,
-                platinum_count: 0,
-                gold_count: 0,
-                silver_count: 0,
-                bronze_count: 0,
-                games_played: 0
-            };
+            return null;
         }
     }
 

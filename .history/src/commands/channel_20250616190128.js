@@ -44,13 +44,8 @@ module.exports = {
             userData = await database.getUser(interaction.user.id);
         } catch (dbError) {
             logger.error('Database error checking user:', dbError);
-            
-            const errorMessage = dbError.message.includes('no such table') 
-                ? '❌ Database not properly initialized. Please contact an administrator.'
-                : '❌ Database error occurred. Please try again later.';
-            
             await interaction.reply({
-                content: errorMessage,
+                content: '❌ Database error occurred. Please try again later.',
                 ephemeral: true
             });
             return;
@@ -199,19 +194,9 @@ async function handleRemoveChannel(interaction, database, logger) {
 async function handleChannelInfo(interaction, database, logger) {
     const userId = interaction.user.id;
     
-    let settings;
-    try {
-        settings = await database.get(`
-            SELECT * FROM notification_settings WHERE discord_id = ?
-        `, [userId]);
-    } catch (dbError) {
-        logger.error('Database error fetching notification settings:', dbError);
-        await interaction.reply({
-            content: '❌ Database error occurred while fetching settings. Please try again later.',
-            ephemeral: true
-        });
-        return;
-    }
+    const settings = await database.get(`
+        SELECT * FROM notification_settings WHERE discord_id = ?
+    `, [userId]);
     
     let channelInfo = 'Not configured';
     let statusColor = 0xFF6B6B;
