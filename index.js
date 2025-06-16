@@ -32,7 +32,7 @@ const client = new Client({
 // Initialize collections for commands
 client.commands = new Collection();
 client.logger = logger;
-client.database = new Database();
+client.database = Database;
 
 /**
  * Load command files dynamically
