@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  discord-psn-bot:
+    build: .
+    container_name: discord-psn-bot
+    restart: unless-stopped
+    
+    # Mount volumes for persistent data
+    volumes:
+      - ./data:/app/data
+      - ./logs:/app/logs
+    
+    # Environment variables (create .env file)
+    env_file:
+      - .env
+    
+    # Additional environment settings
+    environment:
+      - NODE_ENV=production
+      - DATABASE_PATH=/app/data/bot.db
+    
+    # Resource limits (adjust based on your server)
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+    
+    # Logging configuration
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+# Optional: Add a monitoring container
+  # watchtower:
+  #   image: containrrr/watchtower
+  #   container_name: watchtower
+  #   restart: unless-stopped
+  #   volumes:
+  #     - /var/run/docker.sock:/var/run/docker.sock
+  #   command: --interval 30 discord-psn-bot 
