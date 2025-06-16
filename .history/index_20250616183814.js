@@ -24,8 +24,8 @@ const cron = require('node-cron');
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        // Note: MessageContent intent removed to avoid privileged intent requirement
-        // The bot works with slash commands only, which don't need MessageContent
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
     ]
 });
 
@@ -90,7 +90,9 @@ function setupTrophyChecker() {
     cron.schedule('*/30 * * * *', async () => {
         try {
             logger.info('Starting scheduled trophy check...');
-            await client.trophyTracker.checkAllUsers();
+            const TrophyTracker = require('./src/utils/trophyTracker');
+            const tracker = new TrophyTracker(client.database, logger);
+            await tracker.checkAllUsers();
             logger.info('Scheduled trophy check completed');
         } catch (error) {
             logger.error('Error during scheduled trophy check:', error);
@@ -112,19 +114,9 @@ async function init() {
             throw new Error('DISCORD_TOKEN environment variable is required');
         }
         
-        // Log token info (without exposing the actual token)
-        const tokenStart = process.env.DISCORD_TOKEN.substring(0, 10);
-        logger.info(`✅ Environment variables validated - Token starts with: ${tokenStart}...`);
-        logger.info('Available environment variables:', Object.keys(process.env).filter(key => key.startsWith('DISCORD')));
-        
         // Initialize database
         await client.database.init();
         logger.info('✅ Database initialized');
-        
-        // Initialize trophy tracker
-        const TrophyTracker = require('./src/utils/trophyTracker');
-        client.trophyTracker = new TrophyTracker(client.database, logger, client);
-        logger.info('✅ Trophy tracker initialized');
         
         // Load commands and events
         await loadCommands();
@@ -134,15 +126,10 @@ async function init() {
         setupTrophyChecker();
         
         // Login to Discord
-        logger.info('🔑 Attempting to login to Discord...');
         await client.login(process.env.DISCORD_TOKEN);
-        logger.info('✅ Successfully logged in to Discord');
         
     } catch (error) {
-        logger.error('❌ Failed to initialize bot:');
-        logger.error('Error message:', error.message);
-        logger.error('Error stack:', error.stack);
-        logger.error('Full error object:', JSON.stringify(error, null, 2));
+        logger.error('❌ Failed to initialize bot:', error);
         process.exit(1);
     }
 }

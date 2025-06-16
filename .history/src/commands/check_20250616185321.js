@@ -69,21 +69,9 @@ module.exports = {
             await trophyTracker.checkUserTrophies(userData);
             const checkDuration = Date.now() - checkStartTime;
             
-            // Get updated statistics with error handling
-            let stats, recentTrophies = [];
-            try {
-                stats = await trophyTracker.getUserTrophyStats(interaction.user.id);
-                recentTrophies = await database.getRecentTrophies(interaction.user.id, 10);
-            } catch (statsError) {
-                logger.error('Error getting stats in check command:', statsError);
-                stats = {
-                    total_trophies: 0,
-                    platinum_count: 0,
-                    gold_count: 0,
-                    silver_count: 0,
-                    bronze_count: 0
-                };
-            }
+            // Get updated statistics
+            const stats = await trophyTracker.getUserTrophyStats(interaction.user.id);
+            const recentTrophies = await database.getRecentTrophies(interaction.user.id, 10);
             
             // Filter trophies earned since last manual check (last 24 hours)
             const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
@@ -97,11 +85,11 @@ module.exports = {
                     {
                         name: '📊 Current Statistics',
                         value: `
-                            🏆 **Total Trophies:** ${stats.total_trophies || 0}
-                            🥇 **Platinum:** ${stats.platinum_count || 0}
-                            🥇 **Gold:** ${stats.gold_count || 0}
-                            🥈 **Silver:** ${stats.silver_count || 0}
-                            🥉 **Bronze:** ${stats.bronze_count || 0}
+                            🏆 **Total Trophies:** ${stats.total_trophies}
+                            🥇 **Platinum:** ${stats.platinum_count}
+                            🥇 **Gold:** ${stats.gold_count}
+                            🥈 **Silver:** ${stats.silver_count}
+                            🥉 **Bronze:** ${stats.bronze_count}
                         `,
                         inline: true
                     },

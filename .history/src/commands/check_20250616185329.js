@@ -97,11 +97,11 @@ module.exports = {
                     {
                         name: '📊 Current Statistics',
                         value: `
-                            🏆 **Total Trophies:** ${stats.total_trophies || 0}
-                            🥇 **Platinum:** ${stats.platinum_count || 0}
-                            🥇 **Gold:** ${stats.gold_count || 0}
-                            🥈 **Silver:** ${stats.silver_count || 0}
-                            🥉 **Bronze:** ${stats.bronze_count || 0}
+                            🏆 **Total Trophies:** ${stats.total_trophies}
+                            🥇 **Platinum:** ${stats.platinum_count}
+                            🥇 **Gold:** ${stats.gold_count}
+                            🥈 **Silver:** ${stats.silver_count}
+                            🥉 **Bronze:** ${stats.bronze_count}
                         `,
                         inline: true
                     },

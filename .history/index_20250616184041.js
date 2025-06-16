@@ -24,8 +24,8 @@ const cron = require('node-cron');
 const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
-        // Note: MessageContent intent removed to avoid privileged intent requirement
-        // The bot works with slash commands only, which don't need MessageContent
+        GatewayIntentBits.GuildMessages,
+        GatewayIntentBits.MessageContent,
     ]
 });
 
@@ -90,7 +90,9 @@ function setupTrophyChecker() {
     cron.schedule('*/30 * * * *', async () => {
         try {
             logger.info('Starting scheduled trophy check...');
-            await client.trophyTracker.checkAllUsers();
+            const TrophyTracker = require('./src/utils/trophyTracker');
+            const tracker = new TrophyTracker(client.database, logger);
+            await tracker.checkAllUsers();
             logger.info('Scheduled trophy check completed');
         } catch (error) {
             logger.error('Error during scheduled trophy check:', error);
@@ -112,19 +114,11 @@ async function init() {
             throw new Error('DISCORD_TOKEN environment variable is required');
         }
         
-        // Log token info (without exposing the actual token)
-        const tokenStart = process.env.DISCORD_TOKEN.substring(0, 10);
-        logger.info(`✅ Environment variables validated - Token starts with: ${tokenStart}...`);
-        logger.info('Available environment variables:', Object.keys(process.env).filter(key => key.startsWith('DISCORD')));
+        logger.info('✅ Environment variables validated');
         
         // Initialize database
         await client.database.init();
         logger.info('✅ Database initialized');
-        
-        // Initialize trophy tracker
-        const TrophyTracker = require('./src/utils/trophyTracker');
-        client.trophyTracker = new TrophyTracker(client.database, logger, client);
-        logger.info('✅ Trophy tracker initialized');
         
         // Load commands and events
         await loadCommands();
