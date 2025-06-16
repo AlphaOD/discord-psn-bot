@@ -114,6 +114,11 @@ async function init() {
             throw new Error('DISCORD_TOKEN environment variable is required');
         }
         
+        // Log token info (without exposing the actual token)
+        const tokenStart = process.env.DISCORD_TOKEN.substring(0, 10);
+        logger.info(`✅ Environment variables validated - Token starts with: ${tokenStart}...`);
+        logger.info('Available environment variables:', Object.keys(process.env).filter(key => key.startsWith('DISCORD')));
+        
         // Initialize database
         await client.database.init();
         logger.info('✅ Database initialized');
@@ -126,10 +131,15 @@ async function init() {
         setupTrophyChecker();
         
         // Login to Discord
+        logger.info('🔑 Attempting to login to Discord...');
         await client.login(process.env.DISCORD_TOKEN);
+        logger.info('✅ Successfully logged in to Discord');
         
     } catch (error) {
-        logger.error('❌ Failed to initialize bot:', error);
+        logger.error('❌ Failed to initialize bot:');
+        logger.error('Error message:', error.message);
+        logger.error('Error stack:', error.stack);
+        logger.error('Full error object:', JSON.stringify(error, null, 2));
         process.exit(1);
     }
 }
