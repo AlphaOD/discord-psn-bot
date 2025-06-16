@@ -19,6 +19,7 @@ const path = require('path');
 const Database = require('./src/database/database');
 const logger = require('./src/utils/logger');
 const cron = require('node-cron');
+const http = require('http');
 
 // Create Discord client
 const client = new Client({
@@ -33,6 +34,34 @@ const client = new Client({
 client.commands = new Collection();
 client.logger = logger;
 client.database = Database;
+
+/**
+ * Create a simple HTTP server for Render port binding
+ */
+function createHealthServer() {
+    const server = http.createServer((req, res) => {
+        if (req.url === '/health' || req.url === '/') {
+            res.writeHead(200, { 'Content-Type': 'application/json' });
+            res.end(JSON.stringify({
+                status: 'healthy',
+                bot: client.user ? `Logged in as ${client.user.tag}` : 'Not logged in',
+                guilds: client.guilds ? client.guilds.cache.size : 0,
+                uptime: process.uptime(),
+                timestamp: new Date().toISOString()
+            }));
+        } else {
+            res.writeHead(404, { 'Content-Type': 'text/plain' });
+            res.end('Not Found');
+        }
+    });
+
+    const port = process.env.PORT || 3000;
+    server.listen(port, () => {
+        logger.info(`🌐 Health server listening on port ${port}`);
+    });
+
+    return server;
+}
 
 /**
  * Load command files dynamically
@@ -106,6 +135,9 @@ function setupTrophyChecker() {
 async function init() {
     try {
         logger.info('🚀 Starting Discord PSN Bot...');
+        
+        // Create health server for Render port binding
+        createHealthServer();
         
         // Validate environment variables
         if (!process.env.DISCORD_TOKEN) {
