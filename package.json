@@ -4,8 +4,10 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
+    "start:render": "node render-start.js",
     "dev": "nodemon index.js",
     "setup": "node setup.js",
+    "health": "node healthcheck.js",
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",

@@ -163,6 +163,11 @@ async function init() {
         logger.info(`✅ Environment variables validated - Token starts with: ${tokenStart}...`);
         logger.info('Available environment variables:', Object.keys(process.env).filter(key => key.startsWith('DISCORD')));
         
+        // Enhanced environment logging for debugging
+        logger.info('Current working directory:', process.cwd());
+        logger.info('Node.js version:', process.version);
+        logger.info('Platform:', process.platform);
+        
         // Initialize database
         try {
             await client.database.init();

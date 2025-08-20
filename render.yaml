@@ -1,0 +1,19 @@
+# Render deployment configuration
+services:
+  - type: web
+    name: discord-psn-bot
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: npm run start:render
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_PATH
+        value: /opt/render/project/src/data/bot.db
+      - key: LOG_LEVEL
+        value: info
+      # These need to be set in Render dashboard:
+      # - DISCORD_TOKEN
+      # - DISCORD_CLIENT_ID

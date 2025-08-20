@@ -48,7 +48,17 @@ module.exports = {
                     true
                 );
                 
-                await command.execute(interaction);
+                // Add timeout protection for command execution
+                const commandTimeout = new Promise((_, reject) => {
+                    setTimeout(() => {
+                        reject(new Error(`Command ${interaction.commandName} timed out after 30 seconds`));
+                    }, 30000);
+                });
+                
+                await Promise.race([
+                    command.execute(interaction),
+                    commandTimeout
+                ]);
                 
             } catch (error) {
                 logger.error(`Error executing command ${interaction.commandName}:`, error);

@@ -25,25 +25,46 @@ class Database {
      */
     async init() {
         try {
+            console.log(`🗄️  Initializing database at: ${this.dbPath}`);
+            
             // Ensure data directory exists
             const dataDir = path.dirname(this.dbPath);
+            console.log(`📁 Checking data directory: ${dataDir}`);
+            
             if (!fs.existsSync(dataDir)) {
+                console.log(`📁 Creating data directory: ${dataDir}`);
                 fs.mkdirSync(dataDir, { recursive: true });
+                console.log(`✅ Data directory created successfully`);
+            } else {
+                console.log(`✅ Data directory already exists`);
             }
 
-            // Create database connection
+            // Create database connection with enhanced error handling
+            console.log(`🔗 Connecting to SQLite database...`);
             this.db = new sqlite3.Database(this.dbPath, (err) => {
                 if (err) {
+                    console.error(`❌ SQLite connection error: ${err.message}`);
                     throw new Error(`Failed to connect to database: ${err.message}`);
                 }
+                console.log(`✅ SQLite database connected successfully`);
             });
 
+            // Set database pragmas for better performance and reliability
+            await this.run('PRAGMA foreign_keys = ON');
+            await this.run('PRAGMA journal_mode = WAL');
+            await this.run('PRAGMA synchronous = NORMAL');
+            console.log(`✅ Database pragmas configured`);
+
             // Create tables
+            console.log(`📋 Creating database tables...`);
             await this.createTables();
             console.log('✅ Database initialized successfully');
 
         } catch (error) {
             console.error('❌ Database initialization failed:', error);
+            console.error('Database path:', this.dbPath);
+            console.error('Working directory:', process.cwd());
+            console.error('Error stack:', error.stack);
             throw error;
         }
     }
