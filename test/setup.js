@@ -6,37 +6,30 @@
 
 // Mock Discord.js components
 jest.mock('discord.js', () => ({
-    SlashCommandBuilder: jest.fn().mockImplementation(() => ({
-        setName: jest.fn().mockReturnThis(),
-        setDescription: jest.fn().mockReturnThis(),
-        addStringOption: jest.fn().mockImplementation((callback) => {
-            const option = {
-                setName: jest.fn().mockReturnThis(),
-                setDescription: jest.fn().mockReturnThis(),
-                setRequired: jest.fn().mockReturnThis(),
-                setMaxLength: jest.fn().mockReturnThis(),
-                setMinLength: jest.fn().mockReturnThis()
-            };
-            if (callback) callback(option);
-            return {
-                setName: jest.fn().mockReturnThis(),
-                setDescription: jest.fn().mockReturnThis(),
-                addStringOption: jest.fn().mockReturnThis(),
-                addIntegerOption: jest.fn().mockReturnThis(),
-                addBooleanOption: jest.fn().mockReturnThis(),
-                addUserOption: jest.fn().mockReturnThis(),
-                addChannelOption: jest.fn().mockReturnThis(),
-                toJSON: jest.fn().mockReturnValue({}),
-                data: { name: 'link', description: 'Link command' }
-            };
-        }),
-        addIntegerOption: jest.fn().mockReturnThis(),
-        addBooleanOption: jest.fn().mockReturnThis(),
-        addUserOption: jest.fn().mockReturnThis(),
-        addChannelOption: jest.fn().mockReturnThis(),
-        toJSON: jest.fn().mockReturnValue({}),
-        data: { name: 'test', description: 'Test command' }
-    })),
+    SlashCommandBuilder: jest.fn().mockImplementation(() => {
+        const builder = {
+            setName: jest.fn().mockReturnThis(),
+            setDescription: jest.fn().mockReturnThis(),
+            addStringOption: jest.fn().mockImplementation((callback) => {
+                const option = {
+                    setName: jest.fn().mockReturnThis(),
+                    setDescription: jest.fn().mockReturnThis(),
+                    setRequired: jest.fn().mockReturnThis(),
+                    setMaxLength: jest.fn().mockReturnThis(),
+                    setMinLength: jest.fn().mockReturnThis()
+                };
+                if (callback) callback(option);
+                return builder;
+            }),
+            addIntegerOption: jest.fn().mockReturnThis(),
+            addBooleanOption: jest.fn().mockReturnThis(),
+            addUserOption: jest.fn().mockReturnThis(),
+            addChannelOption: jest.fn().mockReturnThis(),
+            toJSON: jest.fn().mockReturnValue({}),
+            data: { name: 'test', description: 'Test command' }
+        };
+        return builder;
+    }),
     EmbedBuilder: jest.fn().mockImplementation(() => ({
         setTitle: jest.fn().mockReturnThis(),
         setDescription: jest.fn().mockReturnThis(),
