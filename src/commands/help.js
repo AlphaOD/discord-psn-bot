@@ -158,11 +158,13 @@ function createNPSSOTokenEmbed() {
         .addFields([
             {
                 name: '🌐 Method 1: Chrome/Edge/Most Browsers',
-                value: '1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**\n' +
+                value: '**IMPORTANT:** NPSSO cookies aren\'t on all pages! Try these URLs:\n' +
+                       '1. Go to **[my.playstation.com/profile](https://my.playstation.com/profile)** ⭐ and **sign in**\n' +
                        '2. Press **F12** to open Developer Tools\n' +
                        '3. Go to **Application** tab → **Storage** → **Cookies** → **my.playstation.com**\n' +
                        '4. Find the cookie named `npsso`\n' +
-                       '5. Copy the 64-character value',
+                       '5. **If not found**, try [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n' +
+                       '6. Copy the 64-character value',
                 inline: false
             },
             {
@@ -290,8 +292,16 @@ function createTroubleshootingEmbed() {
                 inline: false
             },
             {
-                name: '🔍 "Can\'t find NPSSO cookie"',
-                value: '• **Check you\'re fully signed in** - complete any 2FA prompts\n• **Try different PlayStation sites:**\n  - [store.playstation.com](https://store.playstation.com)\n  - [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n• **Use incognito/private browsing** and sign in fresh\n• **Clear browser cache** completely and retry\n• **Try a different browser** (Chrome, Firefox, Edge)\n• Use the **JavaScript console method** with error handling\n• Use `/help topic:npsso-token` for complete guide',
+                name: '🔍 "Can\'t find NPSSO cookie" (Even when signed in)',
+                value: '**NPSSO cookies aren\'t created on all PlayStation pages!** Try these specific URLs:\n' +
+                       '• **[my.playstation.com/profile](https://my.playstation.com/profile)** ⭐ **Best option**\n' +
+                       '• **[account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)** ⭐\n' +
+                       '• [store.playstation.com/cart](https://store.playstation.com/cart)\n' +
+                       '• [web.np.playstation.com](https://web.np.playstation.com)\n\n' +
+                       '**Other fixes:**\n' +
+                       '• Sign in to PlayStation mobile app FIRST, then web\n' +
+                       '• Use completely different browser\n' +
+                       '• Use `/npsso` command for complete troubleshooting',
                 inline: false
             },
             {

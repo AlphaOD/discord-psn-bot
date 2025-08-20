@@ -18,12 +18,13 @@ module.exports = {
             .setDescription('**Having trouble finding your NPSSO token?** Follow this step-by-step guide:')
             .addFields([
                 {
-                    name: '🔄 Step 1: Ensure You\'re Properly Signed In',
-                    value: '• Go to [my.playstation.com](https://my.playstation.com)\n' +
-                           '• **Sign out completely** if already signed in\n' +
-                           '• **Sign in fresh** with your PSN credentials\n' +
-                           '• **Complete any 2FA/security prompts**\n' +
-                           '• Make sure you see your PlayStation dashboard',
+                    name: '🔄 Step 1: Force NPSSO Cookie Creation',
+                    value: '**The NPSSO cookie isn\'t always created on all pages!** Try these specific URLs:\n' +
+                           '• [**my.playstation.com/profile**](https://my.playstation.com/profile) ⭐ **Best option**\n' +
+                           '• [**account.sonyentertainmentnetwork.com**](https://account.sonyentertainmentnetwork.com) ⭐\n' +
+                           '• [**store.playstation.com/cart**](https://store.playstation.com/cart)\n' +
+                           '• [**web.np.playstation.com**](https://web.np.playstation.com)\n\n' +
+                           '**Sign in to each URL** until you find the NPSSO cookie!',
                     inline: false
                 },
                 {
@@ -46,20 +47,26 @@ module.exports = {
                     inline: false
                 },
                 {
-                    name: '💻 Step 4: JavaScript Method (Safest)',
-                    value: '1. On any PlayStation site where you\'re signed in\n' +
+                    name: '💻 Step 4: Enhanced JavaScript Method',
+                    value: '1. Go to [**my.playstation.com/profile**](https://my.playstation.com/profile)\n' +
                            '2. Press **F12** → **Console** tab\n' +
-                           '3. Paste this code:\n' +
+                           '3. Paste this enhanced code:\n' +
                            '```javascript\n' +
+                           'console.log("=== PlayStation Cookie Checker ===");\n' +
                            'let cookies = document.cookie.split(\';\');\n' +
                            'let npsso = cookies.find(c => c.trim().startsWith(\'npsso\'));\n' +
+                           'let signedIn = cookies.find(c => c.trim().startsWith(\'isSignedIn\'));\n' +
+                           'console.log("Signed in:", signedIn ? "YES" : "NO");\n' +
+                           'console.log("Total cookies:", cookies.length);\n' +
                            'if (npsso) {\n' +
-                           '  console.log("Found NPSSO:", npsso.split(\'=\')[1].trim());\n' +
+                           '  console.log("✅ NPSSO Found:", npsso.split(\'=\')[1].trim());\n' +
                            '} else {\n' +
-                           '  console.log("No NPSSO cookie found. Try signing in again.");\n' +
+                           '  console.log("❌ NPSSO not found. Try these URLs:");\n' +
+                           '  console.log("• my.playstation.com/profile");\n' +
+                           '  console.log("• account.sonyentertainmentnetwork.com");\n' +
                            '}\n' +
                            '```\n' +
-                           '4. Press **Enter**',
+                           '4. Press **Enter** and follow the suggestions',
                     inline: false
                 },
                 {
@@ -82,10 +89,19 @@ module.exports = {
                 },
                 {
                     name: '🆘 Last Resort Options',
-                    value: '• Try signing in on **PlayStation mobile app** first, then web\n' +
-                           '• Create a **new PlayStation account** temporarily to test\n' +
-                           '• Ask a friend to check if they can find their token\n' +
-                           '• Contact PlayStation support if account issues persist',
+                    value: '• **Method A: Mobile App + Web Combo**\n' +
+                           '  1. Sign in to PlayStation mobile app\n' +
+                           '  2. Then go to [my.playstation.com/profile](https://my.playstation.com/profile)\n' +
+                           '  3. Check cookies again\n\n' +
+                           '• **Method B: Fresh Browser**\n' +
+                           '  1. Use completely different browser\n' +
+                           '  2. Clear all data/cookies\n' +
+                           '  3. Go to [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n' +
+                           '  4. Sign in fresh\n\n' +
+                           '• **Method C: Desktop App**\n' +
+                           '  1. Install PlayStation App for Windows/Mac\n' +
+                           '  2. Sign in there first\n' +
+                           '  3. Then try web browser',
                     inline: false
                 }
             ])
