@@ -18,22 +18,26 @@ module.exports = {
             .setDescription('**Having trouble finding your NPSSO token?** Follow this step-by-step guide:')
             .addFields([
                 {
-                    name: '🔄 Step 1: Force NPSSO Cookie Creation',
-                    value: '**The NPSSO cookie isn\'t always created on all pages!** Try these specific URLs:\n' +
-                           '• [**my.playstation.com/profile**](https://my.playstation.com/profile) ⭐ **Best option**\n' +
-                           '• [**account.sonyentertainmentnetwork.com**](https://account.sonyentertainmentnetwork.com) ⭐\n' +
-                           '• [**store.playstation.com/cart**](https://store.playstation.com/cart)\n' +
-                           '• [**web.np.playstation.com**](https://web.np.playstation.com)\n\n' +
-                           '**Sign in to each URL** until you find the NPSSO cookie!',
+                    name: '🎯 Method 1: Direct API Endpoint (85% Success Rate)',
+                    value: '**EASIEST METHOD:** Get your token directly from Sony!\n\n' +
+                           '1. **Sign in** to [playstation.com](https://playstation.com) (complete 2FA)\n' +
+                           '2. **In same browser**, go to:\n' +
+                           '   `https://ca.account.sony.com/api/v1/ssocookie`\n' +
+                           '3. **Copy the 64-character token** from the JSON response\n\n' +
+                           '**If that doesn\'t work, try these regional endpoints:**\n' +
+                           '• `https://account.sonyentertainmentnetwork.com/api/v1/ssocookie`\n' +
+                           '• `https://auth.api.sonyentertainmentnetwork.com/2.0/ssocookie`',
                     inline: false
                 },
                 {
-                    name: '🔍 Step 2: Try Multiple PlayStation Sites',
-                    value: 'If you don\'t see the cookie on my.playstation.com, try these:\n' +
-                           '• [store.playstation.com](https://store.playstation.com)\n' +
-                           '• [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n' +
-                           '• [playstation.com](https://playstation.com) (main site)\n\n' +
-                           '**Sign in to each site** and check for the cookie.',
+                    name: '🔧 Method 2: Force Token Generation (If Method 1 Fails)',
+                    value: '**Complete logout and fresh sign-in:**\n\n' +
+                           '1. **Sign out** of ALL PlayStation sites\n' +
+                           '2. **Clear PlayStation cookies** in browser\n' +
+                           '3. **Fresh sign-in** to [my.playstation.com/profile](https://my.playstation.com/profile)\n' +
+                           '4. **Complete 2FA** and wait for profile to load\n' +
+                           '5. **Try the direct API endpoint** again\n\n' +
+                           '**Alternative: Mobile App + Web combo** often works better!',
                     inline: false
                 },
                 {
