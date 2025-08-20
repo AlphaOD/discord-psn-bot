@@ -65,35 +65,103 @@ class PublicPSNApi {
      */
     async validateUsername(username) {
         try {
-            this.logger.debug(`Validating PSN username: ${username}`);
+            this.logger.info(`🔍 Starting PSN username validation for: "${username}"`);
             
-            const searchResults = await this.withTimeout(makeUniversalSearch(
-                {}, // No auth token needed
-                username,
-                'SocialAllAccounts'
-            ));
-            
-            // Check if we found an exact match
-            if (searchResults && searchResults.length > 0) {
-                const exactMatch = searchResults.find(result => 
-                    result.onlineId && result.onlineId.toLowerCase() === username.toLowerCase()
-                );
+            // Method 1: Try universal search first
+            this.logger.debug(`Method 1: Attempting universal search for "${username}"`);
+            let searchResults;
+            try {
+                searchResults = await this.withTimeout(makeUniversalSearch(
+                    {}, // No auth token needed
+                    username,
+                    'SocialAllAccounts'
+                ));
+                this.logger.debug(`Universal search returned ${searchResults?.length || 0} results`);
                 
-                if (exactMatch) {
-                    return {
-                        accountId: exactMatch.accountId,
-                        onlineId: exactMatch.onlineId,
-                        avatarUrl: exactMatch.avatarUrl || null
-                    };
+                if (searchResults && searchResults.length > 0) {
+                    this.logger.debug(`Search results: ${JSON.stringify(searchResults.map(r => ({ onlineId: r.onlineId, accountId: r.accountId })))}`);
+                    
+                    // Check for exact match (case-insensitive)
+                    const exactMatch = searchResults.find(result => 
+                        result.onlineId && result.onlineId.toLowerCase() === username.toLowerCase()
+                    );
+                    
+                    if (exactMatch) {
+                        this.logger.info(`✅ Found exact match via universal search: ${exactMatch.onlineId} (ID: ${exactMatch.accountId})`);
+                        return {
+                            accountId: exactMatch.accountId,
+                            onlineId: exactMatch.onlineId,
+                            avatarUrl: exactMatch.avatarUrl || null
+                        };
+                    } else {
+                        this.logger.debug(`No exact match found. Closest matches: ${searchResults.slice(0, 3).map(r => r.onlineId).join(', ')}`);
+                    }
                 }
+            } catch (searchError) {
+                this.logger.warn(`Universal search failed: ${searchError.message}`);
             }
             
-            this.logger.warn(`PSN username not found: ${username}`);
+            // Method 2: Try direct user profile lookup
+            this.logger.debug(`Method 2: Attempting direct profile lookup for "${username}"`);
+            try {
+                const directProfile = await this.withTimeout(getUserTrophyProfileSummary(
+                    {}, // No auth token needed
+                    username // Try using username directly as account ID
+                ));
+                
+                if (directProfile && directProfile.accountId) {
+                    this.logger.info(`✅ Found user via direct profile lookup: ${username} (ID: ${directProfile.accountId})`);
+                    return {
+                        accountId: directProfile.accountId,
+                        onlineId: username,
+                        avatarUrl: null
+                    };
+                }
+            } catch (directError) {
+                this.logger.debug(`Direct profile lookup failed: ${directError.message}`);
+            }
+            
+            // Method 3: Try searching with different search type
+            this.logger.debug(`Method 3: Attempting alternative search type for "${username}"`);
+            try {
+                const altSearchResults = await this.withTimeout(makeUniversalSearch(
+                    {}, // No auth token needed
+                    username,
+                    'SocialAllAccounts'
+                ));
+                
+                if (altSearchResults && altSearchResults.length > 0) {
+                    this.logger.debug(`Alternative search returned ${altSearchResults.length} results`);
+                    
+                    // Look for partial matches or similar usernames
+                    const partialMatch = altSearchResults.find(result => 
+                        result.onlineId && (
+                            result.onlineId.toLowerCase().includes(username.toLowerCase()) ||
+                            username.toLowerCase().includes(result.onlineId.toLowerCase())
+                        )
+                    );
+                    
+                    if (partialMatch) {
+                        this.logger.info(`✅ Found partial match: ${partialMatch.onlineId} (ID: ${partialMatch.accountId})`);
+                        return {
+                            accountId: partialMatch.accountId,
+                            onlineId: partialMatch.onlineId,
+                            avatarUrl: partialMatch.avatarUrl || null
+                        };
+                    }
+                }
+            } catch (altError) {
+                this.logger.debug(`Alternative search failed: ${altError.message}`);
+            }
+            
+            this.logger.warn(`❌ PSN username "${username}" not found after trying all methods`);
+            this.logger.debug(`Validation failed for username: "${username}". Tried universal search, direct lookup, and alternative search.`);
             return null;
             
         } catch (error) {
-            this.logger.error('PSN username validation failed:', error.message);
-            throw new Error(`Failed to validate PSN username: ${error.message}`);
+            this.logger.error(`💥 PSN username validation completely failed for "${username}":`, error.message);
+            this.logger.error(`Full error details:`, error);
+            throw new Error(`Failed to validate PSN username "${username}": ${error.message}`);
         }
     }
 

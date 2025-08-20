@@ -11,6 +11,9 @@ yarn-error.log*
 .env.test.local
 .env.production.local
 
+# Environment templates (contain real credentials - NEVER commit!)
+env-template.txt
+
 # Database
 data/
 *.db

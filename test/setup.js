@@ -44,6 +44,24 @@ jest.mock('discord.js', () => ({
         addComponents: jest.fn().mockReturnThis(),
         toJSON: jest.fn().mockReturnValue({})
     })),
+    ModalBuilder: jest.fn().mockImplementation(() => ({
+        setCustomId: jest.fn().mockReturnThis(),
+        setTitle: jest.fn().mockReturnThis(),
+        addComponents: jest.fn().mockReturnThis()
+    })),
+    TextInputBuilder: jest.fn().mockImplementation(() => ({
+        setCustomId: jest.fn().mockReturnThis(),
+        setLabel: jest.fn().mockReturnThis(),
+        setStyle: jest.fn().mockReturnThis(),
+        setPlaceholder: jest.fn().mockReturnThis(),
+        setRequired: jest.fn().mockReturnThis(),
+        setMaxLength: jest.fn().mockReturnThis(),
+        setMinLength: jest.fn().mockReturnThis()
+    })),
+    TextInputStyle: {
+        Short: 'SHORT',
+        Paragraph: 'PARAGRAPH'
+    },
     ButtonBuilder: jest.fn().mockImplementation(() => ({
         setCustomId: jest.fn().mockReturnThis(),
         setLabel: jest.fn().mockReturnThis(),
@@ -141,6 +159,7 @@ global.createMockInteraction = (options = {}) => ({
     editReply: jest.fn().mockResolvedValue({}),
     followUp: jest.fn().mockResolvedValue({}),
     deferReply: jest.fn().mockResolvedValue({}),
+    showModal: jest.fn().mockResolvedValue({}),
     client: {
         database: null,
         logger: {

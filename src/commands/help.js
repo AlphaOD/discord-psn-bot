@@ -94,7 +94,7 @@ function createGettingStartedEmbed() {
         .addFields([
             {
                 name: 'Step 1: Link Your PSN Account',
-                value: '• Use `/link` command\n• Click "Start Linking Process"\n• Follow the modal instructions',
+                                            value: '• Use `/link` command\n• Enter your PSN username in the popup modal\n• Wait for confirmation',
                 inline: false
             },
 
@@ -131,7 +131,7 @@ function createPSNLinkingEmbed() {
             },
             {
                 name: '📝 Linking Process',
-                value: '1. Use `/link` command\n2. Enter your PSN username\n3. Wait for confirmation',
+                                            value: '1. Use `/link` command\n2. Enter your PSN username in the popup modal\n3. Wait for confirmation',
                 inline: false
             },
 

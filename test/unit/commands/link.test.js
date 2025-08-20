@@ -294,15 +294,12 @@ describe('Link Command', () => {
     });
     
     describe('Edge Cases', () => {
-        it('should handle missing username option', async () => {
+        it('should show modal when no username provided', async () => {
             mockInteraction.options.getString.mockReturnValue(null);
             
             await linkCommand.execute(mockInteraction);
             
-            expect(mockInteraction.reply).toHaveBeenCalledWith({
-                content: expect.stringContaining('Username parameter is missing or invalid'),
-                flags: 64
-            });
+            expect(mockInteraction.showModal).toHaveBeenCalled();
         });
         
         it('should handle unexpected errors', async () => {
