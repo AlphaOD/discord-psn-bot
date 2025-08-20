@@ -4,14 +4,14 @@ A comprehensive Discord bot that tracks PlayStation Network trophies and provide
 
 ## ✨ Features
 
-- 🔗 **PSN Account Linking** - Connect your PlayStation Network account securely
-- 🏆 **Automatic Trophy Tracking** - Real-time monitoring of new trophy achievements
+- 🔗 **Simple PSN Linking** - Connect using just your PSN username - no tokens needed!
+- 🏆 **Automatic Trophy Tracking** - Real-time monitoring using public PSN data
 - 📊 **Detailed Statistics** - Comprehensive trophy statistics and gaming profiles
 - 🔔 **Smart Notifications** - Beautiful Discord notifications for new trophies
 - 🏅 **Platinum Celebrations** - Special announcements for platinum trophies
-- 📈 **Progress Tracking** - Monitor game completion and trophy progress
+- 📈 **Public Data Access** - Works with publicly visible PSN accounts
 - 🔄 **Manual Checks** - On-demand trophy checking with `/check` command
-- 🛡️ **Secure Authentication** - Encrypted token storage with automatic refresh
+- 🌐 **No Authentication Required** - Uses PSN's public API for maximum simplicity
 
 ## 📋 Prerequisites
 
@@ -20,7 +20,7 @@ Before setting up the bot, ensure you have:
 - **Node.js** (v16.0.0 or higher)
 - **npm** (comes with Node.js)
 - **Discord Bot Token** from [Discord Developer Portal](https://discord.com/developers/applications)
-- **PlayStation Network Account** with trophy visibility enabled
+- **PlayStation Network Account** with public or visible trophy data
 
 ## 🚀 Quick Setup
 
@@ -141,23 +141,23 @@ https://discord.com/api/oauth2/authorize?client_id=YOUR_CLIENT_ID&permissions=21
 
 ### Linking PSN Account
 
-1. Use `/link` command in Discord
-2. Click "Start Linking Process"
-3. Follow the modal to enter your NPSSO token
+1. Use `/link username:YourPSNUsername` command in Discord
+2. Enter your exact PlayStation Network username (case-sensitive)
+3. The bot will validate your account and link it automatically
+4. Start earning trophies and receive notifications!
 
-### Getting NPSSO Token
+### Important Notes
 
-1. Go to [my.playstation.com](https://my.playstation.com) and sign in
-2. Open browser developer tools (F12)
-3. Go to Application/Storage → Cookies
-4. Find the "npsso" cookie
-5. Copy the 64-character value
+- Your PSN username must be exactly as it appears on PlayStation
+- Your account must have public trophy visibility or recent activity
+- The bot uses public PSN data only - no authentication tokens needed
+- Privacy settings that hide all trophy data may prevent linking
 
 ### Available Commands
 
 | Command | Description | Permissions |
 |---------|-------------|-------------|
-| `/link` | Link your PlayStation Network account | Everyone |
+| `/link username:PSN_Username` | Link your PSN account using username | Everyone |
 | `/profile [user]` | View trophy profile and statistics | Everyone |
 | `/check` | Manually check for new trophies | Everyone |
 | `/channel set/remove/info` | Configure trophy notification channels | Manage Channels |
@@ -233,8 +233,9 @@ You can customize the schedule using cron syntax:
 
 ## 🛡️ Security & Privacy
 
-- **Token Encryption**: PSN tokens are securely stored and encrypted
-- **Data Privacy**: Only publicly visible trophy data is accessed
+- **No Authentication Required**: No PSN tokens or passwords needed
+- **Public Data Only**: Only accesses publicly visible trophy information
+- **Privacy Respect**: Cannot access private/hidden trophy data
 - **Rate Limiting**: Built-in API rate limiting to respect PSN servers
 - **Error Handling**: Comprehensive error handling and logging
 
@@ -248,9 +249,10 @@ You can customize the schedule using cron syntax:
 - Verify the `.env` file is properly configured
 
 **PSN linking fails:**
-- Verify NPSSO token is exactly 64 characters
-- Check PSN privacy settings allow trophy visibility
-- Ensure you're using a fresh token (they expire)
+- Verify your PSN username is exactly correct (case-sensitive)
+- Check PSN privacy settings allow public trophy visibility
+- Ensure your account has recent activity or public profile
+- Try the exact username as shown on PlayStation.com
 
 **No trophy notifications:**
 - Verify notification channel is set

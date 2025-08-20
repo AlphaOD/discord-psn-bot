@@ -24,35 +24,77 @@ module.exports = {
         const logger = interaction.client.logger;
         const psnApi = new PublicPSNApi(logger);
         
-        // Get username with better error handling
+        // Get username with comprehensive debugging and fallbacks
         let username;
         const discordUserId = interaction.user.id;
         
-        // Try different ways to get the username option
+        // Debug: Log the entire interaction object structure
+        logger.debug(`=== LINK COMMAND DEBUG ===`);
+        logger.debug(`Interaction type: ${interaction.type}`);
+        logger.debug(`Command name: ${interaction.commandName}`);
+        logger.debug(`User ID: ${discordUserId}`);
+        logger.debug(`Options object keys: ${Object.keys(interaction.options || {})}`);
+        logger.debug(`Options.data: ${JSON.stringify(interaction.options?.data, null, 2)}`);
+        logger.debug(`Options.focused: ${interaction.options?.focused}`);
+        logger.debug(`Options.subcommand: ${interaction.options?.subcommand}`);
+        
+        // Try multiple methods to get the username
         try {
+            // Method 1: Standard getString
             username = interaction.options.getString('username');
+            logger.debug(`Method 1 (getString): ${JSON.stringify(username)}`);
             
-            // If still null, try alternative methods
-            if (username === null || username === undefined) {
-                // Try getting from raw options data
-                const optionsData = interaction.options.data;
-                const usernameOption = optionsData?.find(option => option.name === 'username');
+            // Method 2: Direct from options.data
+            if (!username && interaction.options?.data) {
+                const usernameOption = interaction.options.data.find(opt => opt.name === 'username');
                 username = usernameOption?.value || null;
+                logger.debug(`Method 2 (options.data): ${JSON.stringify(username)}`);
             }
+            
+            // Method 3: Try to access as property
+            if (!username && interaction.options?.username) {
+                username = interaction.options.username;
+                logger.debug(`Method 3 (options.username): ${JSON.stringify(username)}`);
+            }
+            
+            // Method 4: Check if it's a focused option
+            if (!username && interaction.options?.focused === 'username') {
+                username = interaction.options.getFocused();
+                logger.debug(`Method 4 (getFocused): ${JSON.stringify(username)}`);
+            }
+            
         } catch (error) {
             logger.error('Error retrieving username option:', error);
         }
         
-        // Debug logging - show all available options
-        logger.debug(`Link command called - Raw username option: ${JSON.stringify(username)}, Discord ID: ${discordUserId}`);
-        logger.debug(`Available interaction options: ${JSON.stringify(interaction.options?.data)}`);
-        logger.debug(`Interaction type: ${interaction.type}, Command name: ${interaction.commandName}`);
+        logger.debug(`Final username value: ${JSON.stringify(username)} (type: ${typeof username})`);
+        logger.debug(`=== END DEBUG ===`);
         
         // Validate username is not null/undefined
         if (!username || typeof username !== 'string' || username.trim() === '') {
             logger.error(`Username validation failed - Username: "${username}", Type: ${typeof username}`);
+            
+            // Provide more helpful error message with troubleshooting steps
+            const errorMessage = `❌ **Error:** Username parameter is missing or invalid.
+
+**What happened:**
+• The bot couldn't read your username parameter
+• This is usually a Discord command registration issue
+
+**Troubleshooting:**
+1. **Try again** - Sometimes this fixes itself
+2. **Check command format** - Use: \`/link username:EZIO84756\`
+3. **Contact admin** - The command may need to be re-registered
+
+**Technical Details:**
+• Received: ${JSON.stringify(username)} (${typeof username})
+• Command: ${interaction.commandName}
+• User: ${interaction.user.tag}
+
+**Note:** This is a Discord interaction issue, not a problem with your username.`;
+            
             await interaction.reply({ 
-                content: '❌ **Error:** Username parameter is missing or invalid. Please provide a valid PSN username.\n\n**Usage:** `/link username:YourPSNUsername`\n\n**Note:** This appears to be a Discord interaction issue. Please try the command again.',
+                content: errorMessage,
                 flags: 64 
             });
             return;
