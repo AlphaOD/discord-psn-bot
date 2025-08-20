@@ -361,8 +361,9 @@ class PSNApi {
             return false;
         }
         
-        // NPSSO tokens are typically 64 character hex strings
-        return /^[a-fA-F0-9]{64}$/.test(npssoToken);
+        // NPSSO tokens are 64 character alphanumeric strings (letters and numbers)
+        // Updated to support both hex and base62/base64url style tokens
+        return /^[a-zA-Z0-9]{64}$/.test(npssoToken);
     }
 }
 
