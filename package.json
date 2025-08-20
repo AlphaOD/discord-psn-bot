@@ -11,7 +11,16 @@
     "test": "jest",
     "test:watch": "jest --watch",
     "test:coverage": "jest --coverage",
-    "test:ci": "jest --ci --coverage --watchAll=false"
+    "test:ci": "jest --ci --coverage --watchAll=false --verbose",
+    "test:unit": "jest test/unit",
+    "test:integration": "jest test/integration",
+    "test:e2e": "jest test/e2e",
+    "test:database": "jest test/unit/database.test.js",
+    "lint": "echo 'Linting not configured yet'",
+    "lint:fix": "echo 'Lint fix not configured yet'",
+    "format": "echo 'Prettier not configured yet'",
+    "format:check": "echo 'Prettier check not configured yet'",
+    "analyze": "echo 'Static analysis not configured yet'"
   },
   "keywords": [],
   "author": "",
@@ -32,6 +41,7 @@
   },
   "jest": {
     "testEnvironment": "node",
+    "setupFilesAfterEnv": ["<rootDir>/test/setup.js"],
     "testMatch": [
       "**/test/**/*.test.js"
     ],
@@ -45,6 +55,16 @@
       "text",
       "lcov",
       "html"
-    ]
+    ],
+    "coverageThreshold": {
+      "global": {
+        "branches": 80,
+        "functions": 85,
+        "lines": 85,
+        "statements": 85
+      }
+    },
+    "verbose": true,
+    "testTimeout": 10000
   }
 }

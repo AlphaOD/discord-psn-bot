@@ -74,16 +74,12 @@ class Database {
      */
     async createTables() {
         const tables = [
-            // Users table - stores Discord user info and PSN authentication
+            // Users table - simplified for public PSN data usage
             `CREATE TABLE IF NOT EXISTS users (
                 discord_id TEXT PRIMARY KEY,
-                psn_username TEXT,
+                psn_username TEXT NOT NULL UNIQUE,
                 psn_account_id TEXT,
-                npsso_token TEXT,
-                access_token TEXT,
-                refresh_token TEXT,
-                token_expires_at INTEGER,
-                notification_enabled BOOLEAN DEFAULT 1,
+                notifications_enabled BOOLEAN DEFAULT 1,
                 last_trophy_check INTEGER DEFAULT 0,
                 created_at INTEGER DEFAULT (strftime('%s', 'now')),
                 updated_at INTEGER DEFAULT (strftime('%s', 'now'))
@@ -160,6 +156,32 @@ class Database {
                 created_at INTEGER DEFAULT (strftime('%s', 'now')),
                 updated_at INTEGER DEFAULT (strftime('%s', 'now')),
                 UNIQUE(guild_id, setting_type, setting_key, channel_id)
+            )`,
+
+            // Trophy cache table - caches public PSN trophy data
+            `CREATE TABLE IF NOT EXISTS trophy_cache (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                np_communication_id TEXT NOT NULL UNIQUE,
+                game_title TEXT,
+                trophy_data TEXT NOT NULL,
+                cached_at INTEGER DEFAULT (strftime('%s', 'now')),
+                expires_at INTEGER NOT NULL
+            )`,
+
+            // User trophy snapshots - tracks user's public trophy state
+            `CREATE TABLE IF NOT EXISTS user_trophy_snapshots (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                discord_id TEXT NOT NULL,
+                psn_account_id TEXT NOT NULL,
+                snapshot_data TEXT NOT NULL,
+                trophy_count_bronze INTEGER DEFAULT 0,
+                trophy_count_silver INTEGER DEFAULT 0,
+                trophy_count_gold INTEGER DEFAULT 0,
+                trophy_count_platinum INTEGER DEFAULT 0,
+                trophy_level INTEGER DEFAULT 0,
+                created_at INTEGER DEFAULT (strftime('%s', 'now')),
+                FOREIGN KEY (discord_id) REFERENCES users (discord_id),
+                UNIQUE(discord_id)
             )`
         ];
 
@@ -258,12 +280,93 @@ class Database {
     }
 
     /**
-     * Get all users with notification enabled
+     * Get all users with notification enabled (updated for no-auth)
      * @returns {Promise} - Promise that resolves with array of users
      */
     async getUsersWithNotifications() {
-        const sql = 'SELECT * FROM users WHERE notification_enabled = 1 AND access_token IS NOT NULL';
+        const sql = 'SELECT * FROM users WHERE notifications_enabled = 1 AND psn_username IS NOT NULL';
         return this.all(sql);
+    }
+
+    /**
+     * Get user by PSN username
+     * @param {string} psnUsername - PSN username
+     * @returns {Promise} - Promise that resolves with user data
+     */
+    async getUserByPsnUsername(psnUsername) {
+        const sql = 'SELECT * FROM users WHERE psn_username = ?';
+        return this.get(sql, [psnUsername]);
+    }
+
+    /**
+     * Create a new user record
+     * @param {string} discordId - Discord user ID
+     * @param {Object} userData - User data object
+     * @returns {Promise} - Promise that resolves when user is created
+     */
+    async createUser(discordId, userData) {
+        const sql = `
+            INSERT INTO users (discord_id, psn_username, psn_account_id, notifications_enabled, last_trophy_check)
+            VALUES (?, ?, ?, ?, ?)
+        `;
+        return this.run(sql, [
+            discordId,
+            userData.psn_username,
+            userData.psn_account_id,
+            userData.notifications_enabled || 1,
+            userData.last_trophy_check || 0
+        ]);
+    }
+
+    /**
+     * Update user record
+     * @param {string} discordId - Discord user ID
+     * @param {Object} updateData - Data to update
+     * @returns {Promise} - Promise that resolves when user is updated
+     */
+    async updateUser(discordId, updateData) {
+        const fields = [];
+        const values = [];
+        
+        if (updateData.psn_username !== undefined) {
+            fields.push('psn_username = ?');
+            values.push(updateData.psn_username);
+        }
+        if (updateData.psn_account_id !== undefined) {
+            fields.push('psn_account_id = ?');
+            values.push(updateData.psn_account_id);
+        }
+        if (updateData.notifications_enabled !== undefined) {
+            fields.push('notifications_enabled = ?');
+            values.push(updateData.notifications_enabled);
+        }
+        if (updateData.last_trophy_check !== undefined) {
+            fields.push('last_trophy_check = ?');
+            values.push(updateData.last_trophy_check);
+        }
+        if (updateData.updated_at !== undefined) {
+            fields.push('updated_at = ?');
+            values.push(updateData.updated_at);
+        }
+        
+        if (fields.length === 0) {
+            throw new Error('No update fields provided');
+        }
+        
+        values.push(discordId);
+        const sql = `UPDATE users SET ${fields.join(', ')} WHERE discord_id = ?`;
+        
+        return this.run(sql, values);
+    }
+
+    /**
+     * Delete user record
+     * @param {string} discordId - Discord user ID
+     * @returns {Promise} - Promise that resolves when user is deleted
+     */
+    async deleteUser(discordId) {
+        const sql = 'DELETE FROM users WHERE discord_id = ?';
+        return this.run(sql, [discordId]);
     }
 
     // TROPHY MANAGEMENT METHODS
