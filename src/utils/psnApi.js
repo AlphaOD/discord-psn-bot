@@ -35,14 +35,30 @@ class PSNApi {
      * @returns {Promise} - Promise that rejects after timeout
      */
     withTimeout(promise, timeout = this.defaultTimeout) {
-        return Promise.race([
-            promise,
-            new Promise((_, reject) => {
-                setTimeout(() => {
-                    reject(new Error(`PSN API request timed out after ${timeout}ms`));
-                }, timeout);
-            })
-        ]);
+        let timeoutId;
+        
+        const timeoutPromise = new Promise((_, reject) => {
+            timeoutId = setTimeout(() => {
+                reject(new Error(`PSN API request timed out after ${timeout}ms`));
+            }, timeout);
+        });
+
+        // Wrap the original promise to clear timeout on completion
+        const wrappedPromise = promise.then(
+            (result) => {
+                clearTimeout(timeoutId);
+                return result;
+            },
+            (error) => {
+                clearTimeout(timeoutId);
+                throw error;
+            }
+        );
+
+        return Promise.race([wrappedPromise, timeoutPromise]).catch((error) => {
+            clearTimeout(timeoutId);
+            throw error;
+        });
     }
 
     /**

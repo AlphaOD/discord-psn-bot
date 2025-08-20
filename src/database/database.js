@@ -246,28 +246,7 @@ class Database {
 
     // USER MANAGEMENT METHODS
 
-    /**
-     * Add or update a user in the database
-     * @param {Object} userData - User data object
-     * @returns {Promise} - Promise that resolves when user is saved
-     */
-    async saveUser(userData) {
-        const {
-            discordId, psnUsername, psnAccountId, npssoToken,
-            accessToken, refreshToken, tokenExpiresAt
-        } = userData;
 
-        const sql = `
-            INSERT OR REPLACE INTO users 
-            (discord_id, psn_username, psn_account_id, npsso_token, access_token, refresh_token, token_expires_at, updated_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, strftime('%s', 'now'))
-        `;
-
-        return this.run(sql, [
-            discordId, psnUsername, psnAccountId, npssoToken,
-            accessToken, refreshToken, tokenExpiresAt
-        ]);
-    }
 
     /**
      * Get user data by Discord ID

@@ -113,7 +113,7 @@ describe('Database Utility', () => {
                 refreshToken: 'refresh123'
             };
             
-            await expect(database.saveUser(userData)).resolves.not.toThrow();
+            await expect(database.createUser('discord123', userData)).resolves.not.toThrow();
         });
 
         test('should get user by Discord ID', async () => {
@@ -186,7 +186,7 @@ describe('Database Utility', () => {
         test('should handle basic database operations', () => {
             expect(database.db).toBeDefined();
             expect(typeof database.init).toBe('function');
-            expect(typeof database.saveUser).toBe('function');
+            expect(typeof database.createUser).toBe('function');
             expect(typeof database.getUser).toBe('function');
             expect(typeof database.saveTrophy).toBe('function');
             expect(typeof database.saveGame).toBe('function');
@@ -283,7 +283,7 @@ describe('Database Error Handling', () => {
             await expect(database.getUser('user123')).rejects.toThrow('SQLITE_ERROR: database is locked');
         });
 
-        test('saveUser should handle database errors gracefully', async () => {
+        test('createUser should handle database errors gracefully', async () => {
             mockDb.run.mockImplementation((sql, params, callback) => {
                 callback(new Error('SQLITE_ERROR: constraint failed'));
             });
@@ -294,7 +294,7 @@ describe('Database Error Handling', () => {
                 psnAccountId: 'account123'
             };
 
-            await expect(database.saveUser(userData)).rejects.toThrow('SQLITE_ERROR: constraint failed');
+            await expect(database.createUser('discord123', userData)).rejects.toThrow('SQLITE_ERROR: constraint failed');
         });
 
         test('getUsersWithNotifications should handle database errors', async () => {
