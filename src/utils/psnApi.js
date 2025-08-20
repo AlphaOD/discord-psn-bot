@@ -2,7 +2,7 @@
  * PSN API Utility - PlayStation Network API Integration
  * 
  * Handles authentication and data retrieval from PlayStation Network:
- * - User authentication via NPSSO tokens
+ * - Legacy authentication methods (deprecated in favor of public API)
  * - Trophy data fetching
  * - Game information retrieval
  * - Profile data access
