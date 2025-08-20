@@ -10,7 +10,7 @@
  * - Rate limiting and error handling
  */
 
-const PSNApi = require('./psnApi');
+const PublicPSNApi = require('./publicPsnApi');
 const { EmbedBuilder } = require('discord.js');
 
 class TrophyTracker {
@@ -18,7 +18,7 @@ class TrophyTracker {
         this.database = database;
         this.logger = logger;
         this.client = client;
-        this.psnApi = new PSNApi(logger);
+        this.psnApi = new PublicPSNApi(logger);
         
         // Rate limiting - delay between API calls
         this.apiDelay = 2000; // 2 seconds between calls
@@ -69,44 +69,87 @@ class TrophyTracker {
         try {
             this.logger.debug(`Checking trophies for user: ${user.psn_username}`);
             
-            // Validate user has required tokens
-            if (!user.access_token || !user.psn_account_id) {
-                this.logger.warn(`User ${user.discord_id} missing PSN authentication`);
+            // Validate user has required PSN data
+            if (!user.psn_account_id || !user.psn_username) {
+                this.logger.warn(`User ${user.discord_id} missing PSN account information`);
                 return;
             }
             
-            // Check if token needs refresh
-            const accessToken = await this.ensureValidToken(user);
-            if (!accessToken) {
-                this.logger.warn(`Unable to get valid token for user ${user.discord_id}`);
+            // Get user's trophy summary to check for updates
+            let trophySummary;
+            try {
+                trophySummary = await this.psnApi.getUserTrophySummary(user.psn_account_id);
+            } catch (summaryError) {
+                this.logger.warn(`Unable to get trophy summary for user ${user.discord_id}: ${summaryError.message}`);
                 return;
             }
             
-            // Get recent trophies from PSN
-            const recentTrophies = await this.psnApi.getRecentTrophies(
-                accessToken, 
-                user.psn_account_id, 
-                50
-            );
+            // Get user's recent games to check for new trophies
+            let recentGames;
+            try {
+                recentGames = await this.psnApi.getUserGames(user.psn_account_id, 20);
+            } catch (gamesError) {
+                this.logger.warn(`Unable to get recent games for user ${user.discord_id}: ${gamesError.message}`);
+                return;
+            }
             
-            // Filter for new trophies (earned after last check)
+            // Check recent games for new trophies
             const lastCheck = user.last_trophy_check || 0;
-            const newTrophies = recentTrophies.filter(trophy => {
-                const earnedTime = new Date(trophy.earnedDateTime).getTime() / 1000;
-                return earnedTime > lastCheck;
-            });
+            const allNewTrophies = [];
             
-            if (newTrophies.length > 0) {
-                this.logger.info(`Found ${newTrophies.length} new trophies for ${user.psn_username}`);
+            // Check recent games for new trophy progress
+            for (const game of recentGames.slice(0, 10)) { // Limit to 10 most recent games
+                if (game.lastPlayedDateTime) {
+                    const lastPlayedTime = new Date(game.lastPlayedDateTime).getTime() / 1000;
+                    
+                    // Only check games played since last check
+                    if (lastPlayedTime > lastCheck) {
+                        try {
+                            const gameTrophies = await this.psnApi.getGameTrophies(
+                                user.psn_account_id, 
+                                game.npCommunicationId
+                            );
+                            
+                            // Find earned trophies since last check
+                            const newTrophies = gameTrophies.filter(trophy => {
+                                if (trophy.earned && trophy.earnedDateTime) {
+                                    const earnedTime = new Date(trophy.earnedDateTime).getTime() / 1000;
+                                    return earnedTime > lastCheck;
+                                }
+                                return false;
+                            });
+                            
+                            // Add game info to trophies
+                            newTrophies.forEach(trophy => {
+                                trophy.gameTitle = game.trophyTitleName || game.name;
+                                trophy.gameIcon = game.trophyTitleIconUrl;
+                                trophy.npCommunicationId = game.npCommunicationId;
+                            });
+                            
+                            allNewTrophies.push(...newTrophies);
+                            
+                        } catch (trophyError) {
+                            this.logger.debug(`Could not get trophies for game ${game.npCommunicationId}: ${trophyError.message}`);
+                            // Continue with other games
+                        }
+                        
+                        // Rate limiting between game trophy requests
+                        await this.sleep(500);
+                    }
+                }
+            }
+            
+            if (allNewTrophies.length > 0) {
+                this.logger.info(`Found ${allNewTrophies.length} new trophies for ${user.psn_username}`);
                 
                 // Process and store new trophies
-                for (const trophy of newTrophies) {
+                for (const trophy of allNewTrophies) {
                     await this.processTrophy(user, trophy);
                 }
                 
                 // Send notification if enabled
-                if (user.notification_enabled && this.client) {
-                    await this.sendTrophyNotifications(user, newTrophies);
+                if (user.notifications_enabled && this.client) {
+                    await this.sendTrophyNotifications(user, allNewTrophies);
                 }
             }
             
@@ -125,7 +168,7 @@ class TrophyTracker {
     /**
      * Process and store a new trophy
      * @param {Object} user - User data
-     * @param {Object} trophy - Trophy data from PSN
+     * @param {Object} trophy - Trophy data from public PSN API
      */
     async processTrophy(user, trophy) {
         try {
@@ -133,7 +176,7 @@ class TrophyTracker {
                 discordId: user.discord_id,
                 trophyId: trophy.trophyId,
                 trophyName: trophy.trophyName || 'Unknown Trophy',
-                trophyDescription: trophy.trophyDetail || '',
+                trophyDescription: trophy.trophyDetail || trophy.trophyDescription || '',
                 trophyType: trophy.trophyType,
                 trophyIconUrl: trophy.trophyIconUrl || '',
                 gameTitle: trophy.gameTitle || 'Unknown Game',
@@ -328,56 +371,7 @@ class TrophyTracker {
         }
     }
 
-    /**
-     * Ensure user has a valid access token
-     * @param {Object} user - User data
-     * @returns {string|null} - Valid access token or null
-     */
-    async ensureValidToken(user) {
-        try {
-            // Check if current token is still valid
-            if (this.psnApi.isTokenValid(user.access_token, user.token_expires_at)) {
-                return user.access_token;
-            }
-            
-            // Try to refresh token
-            if (user.refresh_token) {
-                this.logger.debug(`Refreshing token for user ${user.discord_id}`);
-                
-                const newTokens = await this.psnApi.refreshAccessToken(user.refresh_token);
-                
-                // Update tokens in database
-                try {
-                    await this.database.run(
-                        `UPDATE users SET 
-                            access_token = ?, 
-                            refresh_token = ?, 
-                            token_expires_at = ?,
-                            updated_at = strftime('%s', 'now')
-                        WHERE discord_id = ?`,
-                        [
-                            newTokens.accessToken,
-                            newTokens.refreshToken,
-                            newTokens.expiresAt,
-                            user.discord_id
-                        ]
-                    );
-                } catch (dbError) {
-                    this.logger.error(`Database error updating tokens for user ${user.discord_id}:`, dbError);
-                    throw dbError;
-                }
-                
-                return newTokens.accessToken;
-            }
-            
-            this.logger.warn(`No valid token available for user ${user.discord_id}`);
-            return null;
-            
-        } catch (error) {
-            this.logger.error(`Error ensuring valid token for user ${user.discord_id}:`, error.message);
-            return null;
-        }
-    }
+
 
     /**
      * Get trophy statistics for a user

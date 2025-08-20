@@ -1,8 +1,8 @@
 const TrophyTracker = require('../src/utils/trophyTracker');
-const PSNApi = require('../src/utils/psnApi');
+const PublicPSNApi = require('../src/utils/publicPsnApi');
 
 // Mock dependencies
-jest.mock('../src/utils/psnApi');
+jest.mock('../src/utils/publicPsnApi');
 jest.mock('../src/utils/logger', () => ({
     info: jest.fn(),
     error: jest.fn(),
@@ -48,13 +48,13 @@ describe('TrophyTracker Error Handling', () => {
             }
         };
         
-        // Mock PSN API
+        // Mock Public PSN API
         mockPsnApi = {
-            getRecentTrophies: jest.fn(),
-            isTokenValid: jest.fn(),
-            refreshAccessToken: jest.fn()
+            getUserTrophySummary: jest.fn(),
+            getUserGames: jest.fn(),
+            getGameTrophies: jest.fn()
         };
-        PSNApi.mockImplementation(() => mockPsnApi);
+        PublicPSNApi.mockImplementation(() => mockPsnApi);
         
         trophyTracker = new TrophyTracker(mockDatabase, mockLogger, mockClient);
     });
@@ -109,8 +109,11 @@ describe('TrophyTracker Error Handling', () => {
         };
 
         test('should handle updateLastTrophyCheck database errors', async () => {
-            mockPsnApi.isTokenValid.mockReturnValue(true);
-            mockPsnApi.getRecentTrophies.mockResolvedValue([]);
+            // Mock successful API calls
+            mockPsnApi.getUserTrophySummary.mockResolvedValue({ trophyLevel: 50 });
+            mockPsnApi.getUserGames.mockResolvedValue([]);
+            
+            // Mock database error
             mockDatabase.updateLastTrophyCheck.mockRejectedValue(
                 new Error('SQLITE_ERROR: database is busy')
             );
@@ -123,29 +126,16 @@ describe('TrophyTracker Error Handling', () => {
             );
         });
 
-        test('should handle token refresh database errors', async () => {
-            const userWithExpiredToken = {
-                ...mockUser,
-                token_expires_at: Date.now() / 1000 - 3600, // Expired 1 hour ago
-                refresh_token: 'refresh123'
-            };
-
-            mockPsnApi.isTokenValid.mockReturnValue(false);
-            mockPsnApi.refreshAccessToken.mockResolvedValue({
-                accessToken: 'newToken',
-                refreshToken: 'newRefresh',
-                expiresAt: Date.now() / 1000 + 3600
-            });
-            
-            mockDatabase.run.mockRejectedValue(
-                new Error('SQLITE_ERROR: constraint failed')
+        test('should handle PSN API errors gracefully', async () => {
+            // Mock API error
+            mockPsnApi.getUserTrophySummary.mockRejectedValue(
+                new Error('PSN API error')
             );
 
-            await trophyTracker.checkUserTrophies(userWithExpiredToken);
+            await trophyTracker.checkUserTrophies(mockUser);
 
-            expect(mockLogger.error).toHaveBeenCalledWith(
-                'Database error updating tokens for user user123:',
-                expect.any(Error)
+            expect(mockLogger.warn).toHaveBeenCalledWith(
+                'Unable to get trophy summary for user user123: PSN API error'
             );
         });
     });
@@ -285,12 +275,12 @@ describe('TrophyTracker Error Handling', () => {
             const mockUser = {
                 discord_id: 'user123',
                 psn_username: 'testuser',
-                access_token: 'token123',
                 psn_account_id: 'account123'
             };
 
-            mockPsnApi.isTokenValid.mockReturnValue(true);
-            mockPsnApi.getRecentTrophies.mockResolvedValue([]);
+            // Mock successful API calls with no new trophies
+            mockPsnApi.getUserTrophySummary.mockResolvedValue({ trophyLevel: 50 });
+            mockPsnApi.getUserGames.mockResolvedValue([]);
             mockDatabase.updateLastTrophyCheck.mockResolvedValue();
 
             await trophyTracker.checkUserTrophies(mockUser);

@@ -299,7 +299,10 @@ describe('Link Command', () => {
             
             await linkCommand.execute(mockInteraction);
             
-            expect(mockInteraction.deferReply).toHaveBeenCalled();
+            expect(mockInteraction.reply).toHaveBeenCalledWith({
+                content: expect.stringContaining('Username parameter is missing or invalid'),
+                flags: 64
+            });
         });
         
         it('should handle unexpected errors', async () => {
