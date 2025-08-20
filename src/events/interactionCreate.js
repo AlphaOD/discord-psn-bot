@@ -207,6 +207,10 @@ async function handleTrophyFilter(interaction) {
  * @param {Object} interaction - Discord interaction object
  */
 async function handlePSNUsernameModal(interaction) {
+    const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
+    const Database = require('../database/database');
+    const RealPSNApi = require('../utils/realPsnApi');
+    
     const username = interaction.fields.getTextInputValue('psn_username');
     const discordUserId = interaction.user.id;
     
@@ -217,7 +221,7 @@ async function handlePSNUsernameModal(interaction) {
         await interaction.deferReply({ ephemeral: true });
         
         // Check if user already exists
-        const existingUser = await Database.getUserByDiscordId(discordUserId);
+        const existingUser = await Database.getUser(discordUserId);
         if (existingUser) {
             const alreadyLinkedEmbed = new EmbedBuilder()
                 .setColor(0xFFA500)
@@ -234,7 +238,6 @@ async function handlePSNUsernameModal(interaction) {
         }
         
         // Initialize Real PSN API
-        const RealPSNApi = require('../utils/realPsnApi');
         const realPsnApi = new RealPSNApi();
         
         // Try to validate username with real PSN API
@@ -246,7 +249,10 @@ async function handlePSNUsernameModal(interaction) {
             logger.info(`✅ Real PSN validation successful for: ${username}`);
             
             // Save user to database
-            const newUser = await Database.createUser(discordUserId, username, validationResult.accountId);
+            const newUser = await Database.createUser(discordUserId, {
+                psn_username: username,
+                psn_account_id: validationResult.accountId
+            });
             
             const successEmbed = new EmbedBuilder()
                 .setColor(0x00FF00)
@@ -274,7 +280,6 @@ async function handlePSNUsernameModal(interaction) {
                     { name: 'Recommendation', value: 'You can still proceed if you\'re confident in your username, or try again later.', inline: false }
                 );
             
-            const { ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
