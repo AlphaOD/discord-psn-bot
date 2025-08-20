@@ -17,7 +17,7 @@ const {
     getUserTitles,
     getTitleTrophies,
     getUserTrophyGroupEarningsForTitle,
-    getUserProfileFromAccountId,
+    getProfileFromAccountId,
     makeUniversalSearch
 } = require('psn-api');
 
@@ -109,7 +109,7 @@ class PSNApi {
         try {
             this.logger.debug(`Fetching profile for account ID: ${accountId}`);
             
-            const profile = await this.withTimeout(getUserProfileFromAccountId(
+            const profile = await this.withTimeout(getProfileFromAccountId(
                 { accessToken },
                 accountId
             ));
