@@ -9,12 +9,33 @@ jest.mock('discord.js', () => ({
     SlashCommandBuilder: jest.fn().mockImplementation(() => ({
         setName: jest.fn().mockReturnThis(),
         setDescription: jest.fn().mockReturnThis(),
-        addStringOption: jest.fn().mockReturnThis(),
+        addStringOption: jest.fn().mockImplementation((callback) => {
+            const option = {
+                setName: jest.fn().mockReturnThis(),
+                setDescription: jest.fn().mockReturnThis(),
+                setRequired: jest.fn().mockReturnThis(),
+                setMaxLength: jest.fn().mockReturnThis(),
+                setMinLength: jest.fn().mockReturnThis()
+            };
+            if (callback) callback(option);
+            return {
+                setName: jest.fn().mockReturnThis(),
+                setDescription: jest.fn().mockReturnThis(),
+                addStringOption: jest.fn().mockReturnThis(),
+                addIntegerOption: jest.fn().mockReturnThis(),
+                addBooleanOption: jest.fn().mockReturnThis(),
+                addUserOption: jest.fn().mockReturnThis(),
+                addChannelOption: jest.fn().mockReturnThis(),
+                toJSON: jest.fn().mockReturnValue({}),
+                data: { name: 'link', description: 'Link command' }
+            };
+        }),
         addIntegerOption: jest.fn().mockReturnThis(),
         addBooleanOption: jest.fn().mockReturnThis(),
         addUserOption: jest.fn().mockReturnThis(),
         addChannelOption: jest.fn().mockReturnThis(),
-        toJSON: jest.fn().mockReturnValue({})
+        toJSON: jest.fn().mockReturnValue({}),
+        data: { name: 'test', description: 'Test command' }
     })),
     EmbedBuilder: jest.fn().mockImplementation(() => ({
         setTitle: jest.fn().mockReturnThis(),
@@ -56,6 +77,15 @@ jest.mock('discord.js', () => ({
         Guilds: 1,
         GuildMessages: 2,
         MessageContent: 4
+    },
+    Events: {
+        InteractionCreate: 'interactionCreate',
+        Ready: 'ready'
+    },
+    InteractionType: {
+        ApplicationCommand: 2,
+        MessageComponent: 3,
+        ModalSubmit: 5
     }
 }));
 
@@ -73,6 +103,15 @@ jest.mock('psn-api', () => ({
 
 // Mock sqlite3
 jest.mock('sqlite3', () => ({
+    verbose: jest.fn().mockReturnValue({
+        Database: jest.fn().mockImplementation(() => ({
+            run: jest.fn(),
+            get: jest.fn(),
+            all: jest.fn(),
+            close: jest.fn(),
+            on: jest.fn()
+        }))
+    }),
     Database: jest.fn().mockImplementation(() => ({
         run: jest.fn(),
         get: jest.fn(),

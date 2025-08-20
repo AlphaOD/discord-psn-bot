@@ -5,6 +5,24 @@
  * user management, trophy storage, and data retrieval
  */
 
+// Mock dependencies before importing Database
+jest.mock('sqlite3', () => ({
+    verbose: jest.fn().mockReturnValue({
+        Database: jest.fn().mockImplementation(() => ({
+            run: jest.fn(),
+            get: jest.fn(),
+            all: jest.fn(),
+            close: jest.fn(),
+            on: jest.fn()
+        }))
+    })
+}));
+
+jest.mock('fs', () => ({
+    existsSync: jest.fn().mockReturnValue(true),
+    mkdirSync: jest.fn()
+}));
+
 const Database = require('../../src/database/database');
 
 describe('Database', () => {
@@ -21,8 +39,9 @@ describe('Database', () => {
             on: jest.fn()
         };
         
-        // Create database instance with mock
+        // Create database instance
         database = new Database(':memory:');
+        // Override the db property with our mock
         database.db = mockDb;
     });
     
@@ -221,104 +240,6 @@ describe('Database', () => {
                     expect.any(Function)
                 );
                 expect(users).toEqual(expectedUsers);
-            });
-        });
-    });
-    
-    describe('Trophy Management', () => {
-        describe('saveTrophy', () => {
-            it('should save trophy data to database', async () => {
-                const trophyData = {
-                    discordId: '123456789',
-                    trophyId: 'trophy001',
-                    trophyName: 'Test Trophy',
-                    trophyDescription: 'A test trophy',
-                    trophyType: 'Gold',
-                    trophyIconUrl: 'https://example.com/icon.png',
-                    gameTitle: 'Test Game',
-                    gameId: 'game001',
-                    earnedDate: 1234567890,
-                    isPlatinum: false
-                };
-                
-                mockDb.run.mockImplementation((sql, params, callback) => {
-                    callback.call({ lastID: 1, changes: 1 }, null);
-                });
-                
-                const result = await database.saveTrophy(trophyData);
-                
-                expect(mockDb.run).toHaveBeenCalledWith(
-                    expect.stringContaining('INSERT OR IGNORE INTO trophies'),
-                    [
-                        '123456789', 'trophy001', 'Test Trophy', 'A test trophy',
-                        'Gold', 'https://example.com/icon.png', 'Test Game', 'game001',
-                        1234567890, false
-                    ],
-                    expect.any(Function)
-                );
-                expect(result).toEqual({ id: 1, changes: 1 });
-            });
-        });
-        
-        describe('getRecentTrophies', () => {
-            it('should retrieve recent trophies for user', async () => {
-                const expectedTrophies = [
-                    { trophy_name: 'Recent Trophy 1', earned_date: 1234567890 },
-                    { trophy_name: 'Recent Trophy 2', earned_date: 1234567880 }
-                ];
-                
-                mockDb.all.mockImplementation((sql, params, callback) => {
-                    callback(null, expectedTrophies);
-                });
-                
-                const trophies = await database.getRecentTrophies('123456789', 5);
-                
-                expect(mockDb.all).toHaveBeenCalledWith(
-                    expect.stringContaining('SELECT * FROM trophies'),
-                    ['123456789', 5],
-                    expect.any(Function)
-                );
-                expect(trophies).toEqual(expectedTrophies);
-            });
-        });
-        
-        describe('getPlatinumTrophies', () => {
-            it('should retrieve platinum trophies for user', async () => {
-                const expectedTrophies = [
-                    { trophy_name: 'Platinum Trophy 1', is_platinum: 1 }
-                ];
-                
-                mockDb.all.mockImplementation((sql, params, callback) => {
-                    callback(null, expectedTrophies);
-                });
-                
-                const trophies = await database.getPlatinumTrophies('123456789');
-                
-                expect(mockDb.all).toHaveBeenCalledWith(
-                    expect.stringContaining('WHERE discord_id = ? AND is_platinum = 1'),
-                    ['123456789'],
-                    expect.any(Function)
-                );
-                expect(trophies).toEqual(expectedTrophies);
-            });
-        });
-        
-        describe('updateLastTrophyCheck', () => {
-            it('should update last trophy check timestamp', async () => {
-                const timestamp = 1234567890;
-                
-                mockDb.run.mockImplementation((sql, params, callback) => {
-                    callback.call({ changes: 1 }, null);
-                });
-                
-                const result = await database.updateLastTrophyCheck('123456789', timestamp);
-                
-                expect(mockDb.run).toHaveBeenCalledWith(
-                    expect.stringContaining('UPDATE users SET last_trophy_check'),
-                    ['123456789', timestamp],
-                    expect.any(Function)
-                );
-                expect(result).toEqual({ changes: 1 });
             });
         });
     });

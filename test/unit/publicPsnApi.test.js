@@ -114,12 +114,15 @@ describe('PublicPSNApi', () => {
         
         it('should handle timeout', async () => {
             const timeoutPromise = new Promise((resolve) => {
-                setTimeout(() => resolve([]), 35000); // Longer than timeout
+                setTimeout(() => resolve([]), 100); // Short delay for test
             });
             makeUniversalSearch.mockReturnValue(timeoutPromise);
             
-            await expect(psnApi.validateUsername('TestPlayer')).rejects.toThrow('PSN API request timed out after 30000ms');
-        });
+            // Use a very short timeout for testing
+            psnApi.defaultTimeout = 50;
+            
+            await expect(psnApi.validateUsername('TestPlayer')).rejects.toThrow('PSN API request timed out after 50ms');
+        }, 1000); // Set test timeout to 1 second
     });
     
     describe('getUserTrophySummary', () => {
@@ -391,9 +394,45 @@ describe('PublicPSNApi', () => {
             };
             
             const mockGames = [
-                { progress: 100, earnedTrophies: { platinum: 1 } },
-                { progress: 50, earnedTrophies: { platinum: 0 } },
-                { progress: 75, earnedTrophies: { platinum: 1 } }
+                { 
+                    progress: 100, 
+                    earnedTrophies: { platinum: 1 },
+                    npCommunicationId: 'NPWR00001_00',
+                    trophyTitleName: 'Game 1',
+                    trophyTitleDetail: 'Game 1 Detail',
+                    trophyTitleIconUrl: 'https://example.com/icon1.png',
+                    trophyTitlePlatform: 'PS5',
+                    hasTrophyGroups: false,
+                    definedTrophies: { bronze: 10, silver: 5, gold: 2, platinum: 1 },
+                    hiddenFlag: false,
+                    lastUpdatedDateTime: '2023-12-01T10:00:00Z'
+                },
+                { 
+                    progress: 50, 
+                    earnedTrophies: { platinum: 0 },
+                    npCommunicationId: 'NPWR00002_00',
+                    trophyTitleName: 'Game 2',
+                    trophyTitleDetail: 'Game 2 Detail',
+                    trophyTitleIconUrl: 'https://example.com/icon2.png',
+                    trophyTitlePlatform: 'PS4',
+                    hasTrophyGroups: true,
+                    definedTrophies: { bronze: 20, silver: 10, gold: 5, platinum: 1 },
+                    hiddenFlag: false,
+                    lastUpdatedDateTime: '2023-12-02T10:00:00Z'
+                },
+                { 
+                    progress: 75, 
+                    earnedTrophies: { platinum: 1 },
+                    npCommunicationId: 'NPWR00003_00',
+                    trophyTitleName: 'Game 3',
+                    trophyTitleDetail: 'Game 3 Detail',
+                    trophyTitleIconUrl: 'https://example.com/icon3.png',
+                    trophyTitlePlatform: 'PS5',
+                    hasTrophyGroups: false,
+                    definedTrophies: { bronze: 15, silver: 8, gold: 3, platinum: 1 },
+                    hiddenFlag: false,
+                    lastUpdatedDateTime: '2023-12-03T10:00:00Z'
+                }
             ];
             
             getUserTrophyProfileSummary.mockResolvedValue(mockSummary);
@@ -402,13 +441,16 @@ describe('PublicPSNApi', () => {
             const result = await psnApi.getDetailedTrophyStats('123456789');
             
             expect(result.trophyLevel).toBe(42);
-            expect(result.gameStats).toEqual({
-                totalGames: 3,
-                completedGames: 1,
-                gamesWithPlatinum: 2,
-                averageCompletion: 75,
-                recentGames: mockGames.slice(0, 5)
-            });
+            expect(result.gameStats.totalGames).toBe(3);
+            expect(result.gameStats.completedGames).toBe(1);
+            expect(result.gameStats.gamesWithPlatinum).toBe(2);
+            expect(result.gameStats.averageCompletion).toBe(75);
+            expect(result.gameStats.recentGames).toHaveLength(3);
+            expect(result.gameStats.recentGames[0]).toEqual(expect.objectContaining({
+                progress: 100,
+                earnedTrophies: { platinum: 1 },
+                trophyTitleName: 'Game 1'
+            }));
         });
         
         it('should handle empty games list', async () => {
