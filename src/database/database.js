@@ -147,6 +147,19 @@ class Database {
                 weekly_summary BOOLEAN DEFAULT 1,
                 channel_id TEXT,
                 FOREIGN KEY (discord_id) REFERENCES users (discord_id)
+            )`,
+
+            // Server settings table - tracks server-wide configurations
+            `CREATE TABLE IF NOT EXISTS server_settings (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                guild_id TEXT NOT NULL,
+                setting_type TEXT NOT NULL,
+                setting_key TEXT,
+                setting_value TEXT,
+                channel_id TEXT,
+                created_at INTEGER DEFAULT (strftime('%s', 'now')),
+                updated_at INTEGER DEFAULT (strftime('%s', 'now')),
+                UNIQUE(guild_id, setting_type, setting_key, channel_id)
             )`
         ];
 

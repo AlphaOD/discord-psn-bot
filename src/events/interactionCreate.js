@@ -30,7 +30,7 @@ module.exports = {
                     if (!allowed) {
                         await interaction.reply({
                             content: '❌ This bot is restricted to specific channels in this server. Contact an administrator for access.',
-                            ephemeral: true
+                            flags: 64 // InteractionResponseFlags.Ephemeral
                         });
                         return;
                     }
@@ -72,7 +72,7 @@ module.exports = {
                 
                 const errorMessage = {
                     content: '❌ There was an error while executing this command!',
-                    ephemeral: true
+                    flags: 64 // InteractionResponseFlags.Ephemeral
                 };
                 
                 if (interaction.replied || interaction.deferred) {
@@ -102,7 +102,7 @@ module.exports = {
                 
                 const errorMessage = {
                     content: '❌ There was an error processing your request!',
-                    ephemeral: true
+                    flags: 64 // InteractionResponseFlags.Ephemeral
                 };
                 
                 if (interaction.replied || interaction.deferred) {
@@ -130,7 +130,7 @@ module.exports = {
                 
                 const errorMessage = {
                     content: '❌ There was an error processing your selection!',
-                    ephemeral: true
+                    flags: 64 // InteractionResponseFlags.Ephemeral
                 };
                 
                 if (interaction.replied || interaction.deferred) {
@@ -155,7 +155,7 @@ module.exports = {
                 
                 const errorMessage = {
                     content: '❌ There was an error processing your submission!',
-                    ephemeral: true
+                    flags: 64 // InteractionResponseFlags.Ephemeral
                 };
                 
                 if (interaction.replied || interaction.deferred) {
@@ -212,7 +212,7 @@ async function handlePSNAuthButton(interaction) {
 
 ⚠️ **Keep your token secure!** Never share it with others.
                 `,
-                ephemeral: true
+                flags: 64 // InteractionResponseFlags.Ephemeral
             });
             break;
     }
@@ -226,7 +226,7 @@ async function handleTrophyButton(interaction) {
     // Implementation for trophy button handling
     await interaction.reply({
         content: '🏆 Trophy button functionality coming soon!',
-        ephemeral: true
+        flags: 64 // InteractionResponseFlags.Ephemeral
     });
 }
 
@@ -238,7 +238,7 @@ async function handleGameSelect(interaction) {
     // Implementation for game selection handling
     await interaction.reply({
         content: '🎮 Game selection functionality coming soon!',
-        ephemeral: true
+        flags: 64 // InteractionResponseFlags.Ephemeral
     });
 }
 
@@ -250,7 +250,7 @@ async function handleTrophyFilter(interaction) {
     // Implementation for trophy filtering
     await interaction.reply({
         content: '🏆 Trophy filter functionality coming soon!',
-        ephemeral: true
+        flags: 64 // InteractionResponseFlags.Ephemeral
     });
 }
 
@@ -263,7 +263,7 @@ async function handlePSNTokenModal(interaction) {
     const logger = interaction.client.logger;
     const database = interaction.client.database;
     
-    await interaction.deferReply({ ephemeral: true });
+    await interaction.deferReply({ flags: 64 }); // InteractionResponseFlags.Ephemeral
     
     try {
         const PSNApi = require('../utils/psnApi');
