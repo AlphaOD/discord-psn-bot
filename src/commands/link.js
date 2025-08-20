@@ -30,7 +30,7 @@ module.exports = {
                 
                 await interaction.reply({
                     content: errorMessage,
-                    ephemeral: true
+                    flags: 64 // InteractionResponseFlags.Ephemeral
                 });
                 return;
             }
@@ -57,7 +57,7 @@ module.exports = {
                     .setTimestamp()
                     .setFooter({ text: 'Use /unlink to disconnect your account' });
                 
-                await interaction.reply({ embeds: [embed], ephemeral: true });
+                await interaction.reply({ embeds: [embed], flags: 64 }); // InteractionResponseFlags.Ephemeral
                 return;
             }
             
@@ -77,6 +77,14 @@ module.exports = {
                     {
                         name: '📋 Requirements',
                         value: '• Valid PlayStation Network account\n• NPSSO authentication token\n• Privacy settings allowing trophy visibility',
+                        inline: false
+                    },
+                    {
+                        name: '🔑 How to Get NPSSO Token',
+                        value: '1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**\n' +
+                               '2. Press **F12** → **Application** → **Cookies** → **my.playstation.com**\n' +
+                               '3. Find `npsso` cookie and copy its 64-character value\n' +
+                               '4. **Can\'t find it?** Use `/help topic:npsso-token` for detailed instructions',
                         inline: false
                     },
                     {
@@ -106,7 +114,7 @@ module.exports = {
             await interaction.reply({ 
                 embeds: [embed], 
                 components: [row], 
-                ephemeral: true 
+                flags: 64 // InteractionResponseFlags.Ephemeral
             });
             
         } catch (error) {
@@ -114,7 +122,7 @@ module.exports = {
             
             await interaction.reply({
                 content: '❌ An error occurred while processing your request. Please try again later.',
-                ephemeral: true
+                flags: 64 // InteractionResponseFlags.Ephemeral
             });
         }
     }

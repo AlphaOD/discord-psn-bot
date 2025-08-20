@@ -202,15 +202,30 @@ async function handlePSNAuthButton(interaction) {
         case 'help':
             await interaction.reply({
                 content: `
-📋 **How to get your NPSSO Token:**
+🔑 **How to Get Your NPSSO Token - Detailed Guide**
 
-1. Go to https://my.playstation.com/ and sign in
-2. Open your browser's developer tools (F12)
-3. Go to Application/Storage > Cookies
-4. Find the cookie named "npsso"
-5. Copy the 64-character value
+**🌐 Method 1: Chrome/Edge (Most Common)**
+1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**
+2. Press **F12** to open Developer Tools
+3. Click **Application** tab → **Storage** → **Cookies** → **my.playstation.com**
+4. Find the cookie named \`npsso\` and copy its value
 
-⚠️ **Keep your token secure!** Never share it with others.
+**🦊 Method 2: Firefox**
+1. Sign in to [my.playstation.com](https://my.playstation.com)
+2. Press **F12** → **Storage** tab → **Cookies** → **my.playstation.com**
+3. Find \`npsso\` cookie and copy its value
+
+**🧑‍💻 Method 3: JavaScript Console (Any Browser)**
+1. Sign in to [my.playstation.com](https://my.playstation.com)
+2. Press **F12** → **Console** tab
+3. Paste: \`document.cookie.split(';').find(row => row.startsWith('npsso')).split('=')[1]\`
+4. Press **Enter** - your token will appear
+
+**❓ Can't find the cookie?** Make sure you're fully signed in and try refreshing the page.
+
+⚠️ **Security:** Your token should be exactly 64 characters. Keep it private!
+
+**Need more help?** Use \`/help topic:npsso-token\` for the complete guide.
                 `,
                 flags: 64 // InteractionResponseFlags.Ephemeral
             });

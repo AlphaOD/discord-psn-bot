@@ -50,11 +50,31 @@ module.exports = {
                     .setTitle('❌ No PSN Account Linked')
                     .setDescription(
                         isOwnProfile 
-                            ? 'You haven\'t linked your PlayStation Network account yet.\n\nUse `/link` to get started!' 
-                            : `${targetUser.displayName} hasn't linked their PlayStation Network account.`
+                            ? '**You haven\'t linked your PlayStation Network account yet.**\n\nGet started with trophy tracking in just a few steps!' 
+                            : `**${targetUser.displayName} hasn't linked their PlayStation Network account.**\n\nThey need to use \`/link\` to set up trophy tracking.`
                     )
                     .setColor(0xFF0000)
                     .setTimestamp();
+
+                if (isOwnProfile) {
+                    embed.addFields([
+                        {
+                            name: '🚀 Quick Setup',
+                            value: '1. Use `/link` to start linking process\n2. Get your NPSSO token from PlayStation\n3. Start earning and tracking trophies!',
+                            inline: false
+                        },
+                        {
+                            name: '🔑 Need Help Getting Your Token?',
+                            value: 'Use `/help topic:npsso-token` for detailed instructions on finding your NPSSO token.',
+                            inline: false
+                        },
+                        {
+                            name: '❓ More Help',
+                            value: 'Use `/help` for complete setup guide and troubleshooting.',
+                            inline: false
+                        }
+                    ]);
+                }
                 
                 await interaction.editReply({ embeds: [embed] });
                 return;
