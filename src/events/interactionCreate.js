@@ -218,10 +218,19 @@ async function handlePSNAuthButton(interaction) {
 **🧑‍💻 Method 3: JavaScript Console (Any Browser)**
 1. Sign in to [my.playstation.com](https://my.playstation.com)
 2. Press **F12** → **Console** tab
-3. Paste: \`document.cookie.split(';').find(row => row.startsWith('npsso')).split('=')[1]\`
-4. Press **Enter** - your token will appear
+3. Paste this safe code:
+\`\`\`javascript
+let cookies = document.cookie.split(';');
+let npsso = cookies.find(c => c.trim().startsWith('npsso'));
+npsso ? npsso.split('=')[1].trim() : "NPSSO cookie not found!"
+\`\`\`
+4. Press **Enter** - your token will appear (or helpful error)
 
-**❓ Can't find the cookie?** Make sure you're fully signed in and try refreshing the page.
+**❓ Can't find the cookie?** 
+• Make sure you're **fully signed in** (complete any 2FA)
+• Try refreshing the page after signing in
+• Try different PlayStation sites (store.playstation.com)
+• Use incognito mode and sign in fresh
 
 ⚠️ **Security:** Your token should be exactly 64 characters. Keep it private!
 

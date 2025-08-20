@@ -177,8 +177,13 @@ function createNPSSOTokenEmbed() {
                 name: '🧑‍💻 Method 3: JavaScript Console (Any Browser)',
                 value: '1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**\n' +
                        '2. Press **F12** → **Console** tab\n' +
-                       '3. Paste: `document.cookie.split(\';\').find(row => row.startsWith(\'npsso\')).split(\'=\')[1]`\n' +
-                       '4. Press **Enter** - your token will appear',
+                       '3. Paste this safe code:\n' +
+                       '```javascript\n' +
+                       'let cookies = document.cookie.split(\';\');\n' +
+                       'let npsso = cookies.find(c => c.trim().startsWith(\'npsso\'));\n' +
+                       'npsso ? npsso.split(\'=\')[1].trim() : "NPSSO cookie not found!"\n' +
+                       '```\n' +
+                       '4. Press **Enter** - your token will appear (or error message)',
                 inline: false
             },
             {
@@ -188,7 +193,7 @@ function createNPSSOTokenEmbed() {
             },
             {
                 name: '🔍 Can\'t Find the Cookie?',
-                value: '• Make sure you\'re **fully signed in** to PlayStation\n• Try refreshing the page\n• Clear browser cache and sign in again\n• Use the JavaScript console method (Method 3)',
+                value: '• Make sure you\'re **fully signed in** to PlayStation\n• **Complete your sign-in process** - check if any 2FA prompts\n• Try refreshing the page after signing in\n• **Clear browser cache** and sign in fresh\n• Try **different PlayStation pages** like:\n  - [store.playstation.com](https://store.playstation.com)\n  - [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n• Use **incognito/private browsing** and sign in fresh\n• Try a **different browser**',
                 inline: false
             }
         ])
@@ -286,7 +291,7 @@ function createTroubleshootingEmbed() {
             },
             {
                 name: '🔍 "Can\'t find NPSSO cookie"',
-                value: '• Make sure you\'re fully signed in to PlayStation\n• Try the JavaScript console method\n• Clear browser cache and sign in again\n• Use `/help topic:npsso-token` for detailed instructions',
+                value: '• **Check you\'re fully signed in** - complete any 2FA prompts\n• **Try different PlayStation sites:**\n  - [store.playstation.com](https://store.playstation.com)\n  - [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n• **Use incognito/private browsing** and sign in fresh\n• **Clear browser cache** completely and retry\n• **Try a different browser** (Chrome, Firefox, Edge)\n• Use the **JavaScript console method** with error handling\n• Use `/help topic:npsso-token` for complete guide',
                 inline: false
             },
             {
