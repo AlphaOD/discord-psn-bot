@@ -89,10 +89,7 @@ module.exports = {
             
             try {
                 // Handle common button interactions here
-                if (interaction.customId.startsWith('psn_auth_')) {
-                    // Handle PSN authentication button clicks
-                    await handlePSNAuthButton(interaction);
-                } else if (interaction.customId.startsWith('trophy_')) {
+                if (interaction.customId.startsWith('trophy_')) {
                     // Handle trophy-related button clicks
                     await handleTrophyButton(interaction);
                 }
@@ -146,9 +143,7 @@ module.exports = {
             logger.debug(`Modal submit interaction: ${interaction.customId} by ${interaction.user.tag}`);
             
             try {
-                if (interaction.customId === 'psn_token_modal') {
-                    await handlePSNTokenModal(interaction);
-                }
+                // No modal handling needed for now
                 
             } catch (error) {
                 logger.error(`Error handling modal submit ${interaction.customId}:`, error);
@@ -168,79 +163,7 @@ module.exports = {
     }
 };
 
-/**
- * Handle PSN authentication button interactions
- * @param {Object} interaction - Discord interaction object
- */
-async function handlePSNAuthButton(interaction) {
-    const action = interaction.customId.split('_')[2];
-    
-    switch (action) {
-        case 'start':
-            // Show modal for NPSSO token input
-            const { ModalBuilder, TextInputBuilder, TextInputStyle, ActionRowBuilder } = require('discord.js');
-            
-            const modal = new ModalBuilder()
-                .setCustomId('psn_token_modal')
-                .setTitle('PlayStation Network Authentication');
-            
-            const tokenInput = new TextInputBuilder()
-                .setCustomId('npsso_token')
-                .setLabel('NPSSO Token')
-                .setStyle(TextInputStyle.Short)
-                .setPlaceholder('Enter your 64-character NPSSO token')
-                .setRequired(true)
-                .setMaxLength(64)
-                .setMinLength(64);
-            
-            const tokenRow = new ActionRowBuilder().addComponents(tokenInput);
-            modal.addComponents(tokenRow);
-            
-            await interaction.showModal(modal);
-            break;
-            
-        case 'help':
-            await interaction.reply({
-                content: `
-🔑 **How to Get Your NPSSO Token - Detailed Guide**
 
-**🌐 Method 1: Chrome/Edge (Most Common)**
-1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**
-2. Press **F12** to open Developer Tools
-3. Click **Application** tab → **Storage** → **Cookies** → **my.playstation.com**
-4. Find the cookie named \`npsso\` and copy its value
-
-**🦊 Method 2: Firefox**
-1. Sign in to [my.playstation.com](https://my.playstation.com)
-2. Press **F12** → **Storage** tab → **Cookies** → **my.playstation.com**
-3. Find \`npsso\` cookie and copy its value
-
-**🧑‍💻 Method 3: JavaScript Console (Any Browser)**
-1. Sign in to [my.playstation.com](https://my.playstation.com)
-2. Press **F12** → **Console** tab
-3. Paste this safe code:
-\`\`\`javascript
-let cookies = document.cookie.split(';');
-let npsso = cookies.find(c => c.trim().startsWith('npsso'));
-npsso ? npsso.split('=')[1].trim() : "NPSSO cookie not found!"
-\`\`\`
-4. Press **Enter** - your token will appear (or helpful error)
-
-**❓ Can't find the cookie?** 
-• Make sure you're **fully signed in** (complete any 2FA)
-• Try refreshing the page after signing in
-• Try different PlayStation sites (store.playstation.com)
-• Use incognito mode and sign in fresh
-
-⚠️ **Security:** Your token should be exactly 64 characters. Keep it private!
-
-**Need more help?** Use \`/help topic:npsso-token\` for the complete guide.
-                `,
-                flags: 64 // InteractionResponseFlags.Ephemeral
-            });
-            break;
-    }
-}
 
 /**
  * Handle trophy-related button interactions
@@ -278,62 +201,4 @@ async function handleTrophyFilter(interaction) {
     });
 }
 
-/**
- * Handle NPSSO token modal submission
- * @param {Object} interaction - Discord interaction object
- */
-async function handlePSNTokenModal(interaction) {
-    const npssoToken = interaction.fields.getTextInputValue('npsso_token');
-    const logger = interaction.client.logger;
-    const database = interaction.client.database;
-    
-    await interaction.deferReply({ flags: 64 }); // InteractionResponseFlags.Ephemeral
-    
-    try {
-        const PSNApi = require('../utils/psnApi');
-        const psnApi = new PSNApi(logger);
-        
-        // Validate token format
-        if (!psnApi.isValidNpssoToken(npssoToken)) {
-            await interaction.editReply({
-                content: '❌ Invalid NPSSO token format. Token must be 64 characters long and contain only letters and numbers.'
-            });
-            return;
-        }
-        
-        // Authenticate with PSN
-        const authTokens = await psnApi.authenticateWithNpsso(npssoToken);
-        
-        // Get user profile to get account ID and username
-        const profile = await psnApi.getUserProfile(authTokens.accessToken, 'me');
-        
-        // Save user to database with error handling
-        try {
-            await database.saveUser({
-                discordId: interaction.user.id,
-                psnUsername: profile.onlineId,
-                psnAccountId: profile.accountId,
-                npssoToken: npssoToken,
-                accessToken: authTokens.accessToken,
-                refreshToken: authTokens.refreshToken,
-                tokenExpiresAt: authTokens.expiresAt
-            });
-        } catch (dbError) {
-            logger.error('Error saving user to database:', dbError);
-            throw new Error('Failed to save account information to database');
-        }
-        
-        logger.info(`PSN account linked: ${interaction.user.tag} -> ${profile.onlineId}`);
-        
-        await interaction.editReply({
-            content: `✅ **PlayStation Network account linked successfully!**\n\n🎮 **PSN Username:** ${profile.onlineId}\n🏆 **Trophy tracking is now active**\n\nUse \`/profile\` to view your trophy statistics!`
-        });
-        
-    } catch (error) {
-        logger.error(`PSN authentication failed for ${interaction.user.tag}:`, error.message);
-        
-        await interaction.editReply({
-            content: `❌ **Authentication failed:** ${error.message}\n\nPlease check your NPSSO token and try again. Use the help button for instructions on how to get your token.`
-        });
-    }
-}
+

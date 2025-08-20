@@ -60,12 +60,12 @@ module.exports = {
                     embed.addFields([
                         {
                             name: '🚀 Quick Setup',
-                            value: '1. Use `/link` to start linking process\n2. Get your NPSSO token from PlayStation\n3. Start earning and tracking trophies!',
+                            value: '1. Use `/link` to connect your PSN username\n2. Enter your exact PSN username\n3. Start earning and tracking trophies!',
                             inline: false
                         },
                         {
-                            name: '🔑 Need Help Getting Your Token?',
-                            value: 'Use `/help topic:npsso-token` for detailed instructions on finding your NPSSO token.',
+                            name: '🔗 Need Help?',
+                            value: 'Use `/help topic:psn-linking` for detailed instructions on linking your account.',
                             inline: false
                         },
                         {

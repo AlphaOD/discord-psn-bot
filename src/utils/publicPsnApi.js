@@ -2,7 +2,7 @@
  * Public PSN API Utility - No Authentication Required
  * 
  * Handles public PlayStation Network data retrieval without requiring
- * NPSSO tokens or user authentication. Uses the psn-api library's
+ * user authentication tokens. Uses the psn-api library's
  * public endpoints for:
  * - User search and validation
  * - Public trophy data

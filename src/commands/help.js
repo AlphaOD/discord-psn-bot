@@ -18,7 +18,7 @@ module.exports = {
                 .addChoices(
                     { name: 'Getting Started', value: 'getting-started' },
                     { name: 'PSN Linking', value: 'psn-linking' },
-                    { name: 'NPSSO Token', value: 'npsso-token' },
+
                     { name: 'Commands', value: 'commands' },
                     { name: 'Notifications', value: 'notifications' },
                     { name: 'Troubleshooting', value: 'troubleshooting' }
@@ -37,9 +37,7 @@ module.exports = {
             case 'psn-linking':
                 embed = createPSNLinkingEmbed();
                 break;
-            case 'npsso-token':
-                embed = createNPSSOTokenEmbed();
-                break;
+
             case 'commands':
                 embed = createCommandsEmbed();
                 break;
@@ -72,7 +70,7 @@ function createOverviewEmbed() {
                 value: 'Use `/help topic:` to get specific help:\n' +
                        '• `getting-started` - First time setup\n' +
                        '• `psn-linking` - How to link your PSN account\n' +
-                       '• `npsso-token` - How to get your NPSSO token\n' +
+
                        '• `commands` - All available commands\n' +
                        '• `notifications` - Set up trophy notifications\n' +
                        '• `troubleshooting` - Fix common issues',
@@ -99,11 +97,7 @@ function createGettingStartedEmbed() {
                 value: '• Use `/link` command\n• Click "Start Linking Process"\n• Follow the modal instructions',
                 inline: false
             },
-            {
-                name: 'Step 2: Get Your NPSSO Token',
-                value: '• Go to [my.playstation.com](https://my.playstation.com)\n• Open browser developer tools\n• Find the `npsso` cookie\n• Use `/help topic:npsso-token` for detailed instructions',
-                inline: false
-            },
+
             {
                 name: 'Step 3: Set Up Notifications',
                 value: '• Use `/channel set #your-channel` to set where notifications go\n• Optionally use `/restrict add #bot-channel` to limit bot usage',
@@ -127,7 +121,7 @@ function createPSNLinkingEmbed() {
         .addFields([
             {
                 name: '📋 Requirements',
-                value: '• Valid PlayStation Network account\n• NPSSO authentication token\n• PSN privacy settings allowing trophy visibility',
+                value: '• Valid PlayStation Network account\n• PSN privacy settings allowing trophy visibility',
                 inline: false
             },
             {
@@ -137,72 +131,17 @@ function createPSNLinkingEmbed() {
             },
             {
                 name: '📝 Linking Process',
-                value: '1. Use `/link` command\n2. Click "Start Linking Process"\n3. Enter your NPSSO token in the modal\n4. Wait for confirmation',
+                value: '1. Use `/link` command\n2. Enter your PSN username\n3. Wait for confirmation',
                 inline: false
             },
-            {
-                name: '❓ Need Your NPSSO Token?',
-                value: 'Use `/help topic:npsso-token` for step-by-step instructions on finding your token.',
-                inline: false
-            }
+
         ])
         .setColor(0xFF9900)
         .setFooter({ text: 'Your account data is secure and encrypted' })
         .setTimestamp();
 }
 
-function createNPSSOTokenEmbed() {
-    return new EmbedBuilder()
-        .setTitle('🔑 How to Get Your NPSSO Token')
-        .setDescription('Your NPSSO token is required to authenticate with PlayStation Network. Follow these browser-specific instructions:')
-        .addFields([
-            {
-                name: '🌐 Method 1: Chrome/Edge/Most Browsers',
-                value: '**IMPORTANT:** NPSSO cookies aren\'t on all pages! Try these URLs:\n' +
-                       '1. Go to **[my.playstation.com/profile](https://my.playstation.com/profile)** ⭐ and **sign in**\n' +
-                       '2. Press **F12** to open Developer Tools\n' +
-                       '3. Go to **Application** tab → **Storage** → **Cookies** → **my.playstation.com**\n' +
-                       '4. Find the cookie named `npsso`\n' +
-                       '5. **If not found**, try [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n' +
-                       '6. Copy the 64-character value',
-                inline: false
-            },
-            {
-                name: '🦊 Method 2: Firefox',
-                value: '1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**\n' +
-                       '2. Press **F12** → **Storage** tab\n' +
-                       '3. **Cookies** → **my.playstation.com**\n' +
-                       '4. Find `npsso` and copy its value',
-                inline: false
-            },
-            {
-                name: '🧑‍💻 Method 3: JavaScript Console (Any Browser)',
-                value: '1. Go to [my.playstation.com](https://my.playstation.com) and **sign in**\n' +
-                       '2. Press **F12** → **Console** tab\n' +
-                       '3. Paste this safe code:\n' +
-                       '```javascript\n' +
-                       'let cookies = document.cookie.split(\';\');\n' +
-                       'let npsso = cookies.find(c => c.trim().startsWith(\'npsso\'));\n' +
-                       'npsso ? npsso.split(\'=\')[1].trim() : "NPSSO cookie not found!"\n' +
-                       '```\n' +
-                       '4. Press **Enter** - your token will appear (or error message)',
-                inline: false
-            },
-            {
-                name: '⚠️ Important Notes',
-                value: '• Token must be exactly **64 characters**\n• Keep your token **private and secure**\n• Tokens expire - you may need to get a new one occasionally\n• Make sure you\'re signed into the **correct PSN account**',
-                inline: false
-            },
-            {
-                name: '🔍 Can\'t Find the Cookie?',
-                value: '• Make sure you\'re **fully signed in** to PlayStation\n• **Complete your sign-in process** - check if any 2FA prompts\n• Try refreshing the page after signing in\n• **Clear browser cache** and sign in fresh\n• Try **different PlayStation pages** like:\n  - [store.playstation.com](https://store.playstation.com)\n  - [account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)\n• Use **incognito/private browsing** and sign in fresh\n• Try a **different browser**',
-                inline: false
-            }
-        ])
-        .setColor(0xFF3300)
-        .setFooter({ text: 'Need more help? Contact support or try the troubleshooting guide' })
-        .setTimestamp();
-}
+
 
 function createCommandsEmbed() {
     return new EmbedBuilder()
@@ -283,7 +222,7 @@ function createTroubleshootingEmbed() {
         .addFields([
             {
                 name: '❌ "PSN linking fails"',
-                value: '• Verify NPSSO token is exactly 64 characters\n• Check PSN privacy settings allow trophy visibility\n• Use a fresh token (they expire)\n• Make sure you\'re signed into the correct PSN account',
+                value: '• Check PSN privacy settings allow trophy visibility\n• Make sure PSN username is correct (case-sensitive)\n• Ensure the account is public or has recent activity\n• Try again with exact PSN username from PlayStation.com',
                 inline: false
             },
             {
@@ -292,16 +231,12 @@ function createTroubleshootingEmbed() {
                 inline: false
             },
             {
-                name: '🔍 "Can\'t find NPSSO cookie" (Even when signed in)',
-                value: '**NPSSO cookies aren\'t created on all PlayStation pages!** Try these specific URLs:\n' +
-                       '• **[my.playstation.com/profile](https://my.playstation.com/profile)** ⭐ **Best option**\n' +
-                       '• **[account.sonyentertainmentnetwork.com](https://account.sonyentertainmentnetwork.com)** ⭐\n' +
-                       '• [store.playstation.com/cart](https://store.playstation.com/cart)\n' +
-                       '• [web.np.playstation.com](https://web.np.playstation.com)\n\n' +
-                       '**Other fixes:**\n' +
-                       '• Sign in to PlayStation mobile app FIRST, then web\n' +
-                       '• Use completely different browser\n' +
-                       '• Use `/npsso` command for complete troubleshooting',
+                name: '🔍 "Username not found"',
+                value: '• PSN usernames are **case-sensitive** - check exact spelling\n' +
+                       '• Verify the account exists on [my.playstation.com](https://my.playstation.com)\n' +
+                       '• Ensure the profile is public or has recent activity\n' +
+                       '• Some very private accounts may not be findable via public API\n' +
+                       '• Try searching with `/search-player username` to find similar names',
                 inline: false
             },
             {
@@ -310,8 +245,8 @@ function createTroubleshootingEmbed() {
                 inline: false
             },
             {
-                name: '🔒 "Authentication expired"',
-                value: '• Your PSN token has expired\n• Use `/link` to re-authenticate\n• Get a fresh NPSSO token\n• This is normal and happens periodically',
+                name: '🔒 "Account access issues"',
+                value: '• Account linking may need to be refreshed\n• Use `/link` to re-link your account\n• Check if your PSN privacy settings changed\n• This can happen with PSN account updates',
                 inline: false
             },
             {

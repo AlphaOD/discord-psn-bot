@@ -24,8 +24,41 @@ module.exports = {
         const logger = interaction.client.logger;
         const psnApi = new PublicPSNApi(logger);
         
-        const username = interaction.options.getString('username');
+        // Get username with better error handling
+        let username;
         const discordUserId = interaction.user.id;
+        
+        // Try different ways to get the username option
+        try {
+            username = interaction.options.getString('username');
+            
+            // If still null, try alternative methods
+            if (username === null || username === undefined) {
+                // Try getting from raw options data
+                const optionsData = interaction.options.data;
+                const usernameOption = optionsData?.find(option => option.name === 'username');
+                username = usernameOption?.value || null;
+            }
+        } catch (error) {
+            logger.error('Error retrieving username option:', error);
+        }
+        
+        // Debug logging - show all available options
+        logger.debug(`Link command called - Raw username option: ${JSON.stringify(username)}, Discord ID: ${discordUserId}`);
+        logger.debug(`Available interaction options: ${JSON.stringify(interaction.options?.data)}`);
+        logger.debug(`Interaction type: ${interaction.type}, Command name: ${interaction.commandName}`);
+        
+        // Validate username is not null/undefined
+        if (!username || typeof username !== 'string' || username.trim() === '') {
+            logger.error(`Username validation failed - Username: "${username}", Type: ${typeof username}`);
+            await interaction.reply({ 
+                content: '❌ **Error:** Username parameter is missing or invalid. Please provide a valid PSN username.\n\n**Usage:** `/link username:YourPSNUsername`\n\n**Note:** This appears to be a Discord interaction issue. Please try the command again.',
+                flags: 64 
+            });
+            return;
+        }
+        
+        const trimmedUsername = username.trim();
         
         try {
             await interaction.deferReply({ flags: 64 }); // Ephemeral response
@@ -72,11 +105,11 @@ module.exports = {
             
             // Check if PSN username is already linked to another Discord user
             try {
-                const existingPsnUser = await database.getUserByPsnUsername(username);
+                const existingPsnUser = await database.getUserByPsnUsername(trimmedUsername);
                 if (existingPsnUser && existingPsnUser.discord_id !== discordUserId) {
                     const embed = new EmbedBuilder()
                         .setTitle('❌ PSN Username Already Linked')
-                        .setDescription(`The PSN username **${username}** is already linked to another Discord user.`)
+                        .setDescription(`The PSN username **${trimmedUsername}** is already linked to another Discord user.`)
                         .addFields([
                             {
                                 name: 'ℹ️ What does this mean?',
@@ -84,7 +117,7 @@ module.exports = {
                             },
                             {
                                 name: '🔧 Solutions',
-                                value: '• Double-check your PSN username spelling\\n• Use `/browse-player ${username}` to view public stats without linking\\n• Contact a server admin if you believe this is an error'
+                                value: '• Double-check your PSN username spelling\\n• Use `/browse-player ${trimmedUsername}` to view public stats without linking\\n• Contact a server admin if you believe this is an error'
                             }
                         ])
                         .setColor('#FF4757')
@@ -99,16 +132,19 @@ module.exports = {
             }
             
             // Validate PSN username exists using public API
-            logger.info(`Validating PSN username: ${username} for Discord user: ${discordUserId}`);
+            logger.info(`Validating PSN username: ${trimmedUsername} for Discord user: ${discordUserId}`);
             
             let psnAccountData;
             try {
-                psnAccountData = await psnApi.validateUsername(username);
+                psnAccountData = await psnApi.validateUsername(trimmedUsername);
                 
                 if (!psnAccountData) {
+                    // Debug logging
+                    logger.debug(`PSN validation failed - Username: "${trimmedUsername}", Type: ${typeof trimmedUsername}`);
+                    
                     const embed = new EmbedBuilder()
                         .setTitle('❌ PSN Username Not Found')
-                        .setDescription(`The PSN username **${username}** could not be found.`)
+                        .setDescription(`The PSN username **${trimmedUsername}** could not be found.`)
                         .addFields([
                             {
                                 name: '🔍 Double-check your username',
@@ -116,7 +152,7 @@ module.exports = {
                             },
                             {
                                 name: '💡 Try these alternatives',
-                                value: '• Use `/search-player ${username}` to find similar usernames\\n• Check your exact username on PlayStation.com\\n• Make sure your profile visibility allows public access'
+                                value: '• Use `/search-player ${trimmedUsername}` to find similar usernames\\n• Check your exact username on PlayStation.com\\n• Make sure your profile visibility allows public access'
                             }
                         ])
                         .setColor('#FF4757')
