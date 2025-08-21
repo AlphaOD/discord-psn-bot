@@ -89,9 +89,9 @@ module.exports = {
             
             try {
                 if (interaction.customId === 'link_continue_anyway') {
-                    await handleLinkContinueAnyway(interaction);
+                    await handleLinkContinueAnyway(interaction, logger);
                 } else if (interaction.customId === 'link_cancel') {
-                    await handleLinkCancel(interaction);
+                    await handleLinkCancel(interaction, logger);
                 } else {
                     logger.warn(`Unknown button interaction: ${interaction.customId}`);
                 }
@@ -144,7 +144,7 @@ module.exports = {
             try {
                 if (interaction.customId === 'psn_username_modal') {
                     logger.info(`Processing PSN username modal for user ${interaction.user.tag}`);
-                    await handlePSNUsernameModal(interaction);
+                    await handlePSNUsernameModal(interaction, logger);
                     logger.info(`PSN username modal processed successfully for user ${interaction.user.tag}`);
                 } else {
                     logger.warn(`Unknown modal submit interaction: ${interaction.customId}`);
@@ -214,8 +214,9 @@ async function handleTrophyFilter(interaction) {
 /**
  * Handle PSN username modal submission
  * @param {Object} interaction - Discord interaction object
+ * @param {Object} logger - Logger instance
  */
-async function handlePSNUsernameModal(interaction) {
+async function handlePSNUsernameModal(interaction, logger) {
     const { EmbedBuilder, ActionRowBuilder, ButtonBuilder, ButtonStyle } = require('discord.js');
     const Database = require('../database/database');
     const RealPSNApi = require('../utils/realPsnApi');
@@ -348,7 +349,7 @@ async function handlePSNUsernameModal(interaction) {
     }
 }
 
-async function handleLinkContinueAnyway(interaction) {
+async function handleLinkContinueAnyway(interaction, logger) {
     const discordUserId = interaction.user.id;
     
     logger.info(`User ${discordUserId} chose to continue with link despite validation issues`);
@@ -377,7 +378,7 @@ async function handleLinkContinueAnyway(interaction) {
     }
 }
 
-async function handleLinkCancel(interaction) {
+async function handleLinkCancel(interaction, logger) {
     const discordUserId = interaction.user.id;
     
     logger.info(`User ${discordUserId} cancelled the link process`);
