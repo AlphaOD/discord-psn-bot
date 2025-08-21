@@ -15,7 +15,6 @@ module.exports = {
     async execute(interaction) {
         const database = interaction.client.database;
         const logger = interaction.client.logger;
-        const trophyTracker = interaction.client.trophyTracker;
         
         await interaction.deferReply();
         
@@ -46,17 +45,8 @@ module.exports = {
                 return;
             }
             
-            // Check if user has valid authentication
-            if (!userData.access_token || !userData.psn_account_id) {
-                const embed = new EmbedBuilder()
-                    .setTitle('❌ Authentication Required')
-                    .setDescription('Your PSN authentication has expired. Please re-link your account using `/link`.')
-                    .setColor(0xFF0000)
-                    .setTimestamp();
-                
-                await interaction.editReply({ embeds: [embed] });
-                return;
-            }
+            // Note: We no longer require access_token and psn_account_id
+            // Users can be linked with just username for basic functionality
             
             // Show initial checking message
             const checkingEmbed = new EmbedBuilder()
@@ -67,118 +57,75 @@ module.exports = {
             
             await interaction.editReply({ embeds: [checkingEmbed] });
             
-            // Perform trophy check with timeout protection
+            // Try to fetch trophy data using RealPSNApi
             const checkStartTime = Date.now();
+            let checkDuration = 0;
+            
             try {
-                // Add timeout wrapper to prevent hanging requests
-                await Promise.race([
-                    trophyTracker.checkUserTrophies(userData),
-                    new Promise((_, reject) => {
-                        setTimeout(() => {
-                            reject(new Error('Trophy check timed out after 60 seconds'));
-                        }, 60000); // 60 second timeout
-                    })
-                ]);
-            } catch (timeoutError) {
-                if (timeoutError.message.includes('timed out')) {
-                    logger.warn(`Trophy check timed out for user ${interaction.user.id}`);
-                    const timeoutEmbed = new EmbedBuilder()
-                        .setTitle('⏰ Check Timed Out')
-                        .setDescription('The trophy check took too long and was cancelled to prevent issues.\n\nThis usually happens when PlayStation Network is slow. Please try again later.')
-                        .setColor(0xFFAA00)
-                        .setTimestamp();
-                    
-                    await interaction.editReply({ embeds: [timeoutEmbed] });
-                    return;
-                }
-                throw timeoutError; // Re-throw if it's not a timeout error
-            }
-            const checkDuration = Date.now() - checkStartTime;
-            
-            // Get updated statistics with error handling
-            let stats, recentTrophies = [];
-            try {
-                stats = await trophyTracker.getUserTrophyStats(interaction.user.id);
-                recentTrophies = await database.getRecentTrophies(interaction.user.id, 10);
-            } catch (statsError) {
-                logger.error('Error getting stats in check command:', statsError);
-                stats = {
-                    total_trophies: 0,
-                    platinum_count: 0,
-                    gold_count: 0,
-                    silver_count: 0,
-                    bronze_count: 0
-                };
-            }
-            
-            // Filter trophies earned since last manual check (last 24 hours)
-            const twentyFourHoursAgo = Math.floor(Date.now() / 1000) - (24 * 60 * 60);
-            const newTrophies = recentTrophies.filter(trophy => trophy.earned_date > twentyFourHoursAgo);
-            
-            // Create result embed
-            const resultEmbed = new EmbedBuilder()
-                .setTitle('✅ Trophy Check Complete')
-                .setDescription(`Checked trophy data for **${userData.psn_username}**`)
-                .addFields([
-                    {
-                        name: '📊 Current Statistics',
-                        value: `
-                            🏆 **Total Trophies:** ${stats.total_trophies || 0}
-                            🥇 **Platinum:** ${stats.platinum_count || 0}
-                            🥇 **Gold:** ${stats.gold_count || 0}
-                            🥈 **Silver:** ${stats.silver_count || 0}
-                            🥉 **Bronze:** ${stats.bronze_count || 0}
-                        `,
-                        inline: true
-                    },
-                    {
-                        name: '🔍 Check Results',
-                        value: `
-                            ⏱️ **Duration:** ${checkDuration}ms
-                            🆕 **New Trophies (24h):** ${newTrophies.length}
-                            🔄 **Last Updated:** <t:${Math.floor(Date.now() / 1000)}:R>
-                        `,
-                        inline: true
-                    }
-                ])
-                .setColor(newTrophies.length > 0 ? 0x00FF00 : 0x0099FF)
-                .setTimestamp()
-                .setFooter({ 
-                    text: 'Automatic checks run every 30 minutes',
-                    iconURL: interaction.user.displayAvatarURL()
-                });
-            
-            // Add new trophies if found
-            if (newTrophies.length > 0) {
-                const newTrophyList = newTrophies
-                    .slice(0, 5) // Limit to 5 for display
-                    .map(trophy => {
-                        const icon = getTrophyIcon(trophy.trophy_type);
-                        const timeAgo = `<t:${trophy.earned_date}:R>`;
-                        return `${icon} **${trophy.trophy_name}**\n🎮 ${trophy.game_title} ${timeAgo}`;
-                    })
-                    .join('\n\n');
+                const RealPSNApi = require('../utils/realPsnApi');
+                const realPsnApi = new RealPSNApi();
                 
-                resultEmbed.addFields([{
-                    name: `🆕 Recent Trophies (${newTrophies.length})`,
-                    value: newTrophyList + (newTrophies.length > 5 ? `\n\n...and ${newTrophies.length - 5} more` : ''),
-                    inline: false
-                }]);
+                logger.info(`Attempting to fetch trophy data for ${userData.psn_username} using RealPSNApi`);
                 
-                // Special message for new platinums
-                const newPlatinums = newTrophies.filter(t => t.trophy_type === 'platinum');
-                if (newPlatinums.length > 0) {
-                    resultEmbed.setDescription(`🎉 **Congratulations!** You earned ${newPlatinums.length} Platinum trophy${newPlatinums.length > 1 ? 'ies' : ''} recently!`);
-                }
-            } else {
-                resultEmbed.addFields([{
-                    name: '📝 No New Trophies',
-                    value: 'No new trophies found in the last 24 hours.\n\nKeep gaming to earn more trophies! 🎮',
-                    inline: false
-                }]);
+                // For now, we'll show a message about the current limitations
+                // In the future, we can implement NPSSO token collection for full access
+                checkDuration = Date.now() - checkStartTime;
+                
+                const resultEmbed = new EmbedBuilder()
+                    .setTitle('⚠️ Trophy Check Limited')
+                    .setDescription(`Checked status for **${userData.psn_username}**`)
+                    .addFields([
+                        {
+                            name: '📊 Current Status',
+                            value: `
+                                🔗 **Account Status:** Linked
+                                🏆 **Trophy Access:** Limited (requires NPSSO token)
+                                📅 **Linked Since:** <t:${Math.floor(new Date(userData.created_at).getTime() / 1000)}:R>
+                            `,
+                            inline: true
+                        },
+                        {
+                            name: '🔍 Check Results',
+                            value: `
+                                ⏱️ **Duration:** ${checkDuration}ms
+                                🔄 **Last Updated:** <t:${Math.floor(Date.now() / 1000)}:R>
+                                📝 **Note:** Full trophy data requires NPSSO authentication
+                            `,
+                            inline: true
+                        }
+                    ])
+                    .setColor(0xFFAA00)
+                    .setTimestamp()
+                    .setFooter({ 
+                        text: 'Use /link with NPSSO token for full trophy access',
+                        iconURL: interaction.user.displayAvatarURL()
+                    });
+                
+                await interaction.editReply({ embeds: [resultEmbed] });
+                
+            } catch (error) {
+                logger.error(`Error in trophy check for user ${interaction.user.id}:`, error);
+                
+                const errorEmbed = new EmbedBuilder()
+                    .setTitle('❌ Trophy Check Failed')
+                    .setDescription(`An error occurred while checking trophies for **${userData.psn_username}**`)
+                    .addFields([
+                        {
+                            name: '🔍 Error Details',
+                            value: error.message || 'Unknown error occurred',
+                            inline: false
+                        },
+                        {
+                            name: '💡 What to do next',
+                            value: 'Try again later or contact support if the issue persists',
+                            inline: false
+                        }
+                    ])
+                    .setColor(0xFF0000)
+                    .setTimestamp();
+                
+                await interaction.editReply({ embeds: [errorEmbed] });
             }
-            
-            await interaction.editReply({ embeds: [resultEmbed] });
             
         } catch (error) {
             logger.error(`Error in check command for user ${interaction.user.id}:`, error);
@@ -193,31 +140,19 @@ module.exports = {
                         inline: false
                     },
                     {
-                        name: '💡 What to do',
-                        value: '• Try again in a few minutes\n• Check your PSN privacy settings\n• Re-link your account with `/link`',
+                        name: '💡 What to do next',
+                        value: '• Try again later\n• Check your PSN privacy settings\n• Contact support if the issue persists',
                         inline: false
                     }
                 ])
                 .setColor(0xFF0000)
                 .setTimestamp();
             
-            await interaction.editReply({ embeds: [errorEmbed] });
+            if (interaction.replied || interaction.deferred) {
+                await interaction.editReply({ embeds: [errorEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errorEmbed] });
+            }
         }
     }
-};
-
-/**
- * Get trophy icon emoji
- * @param {string} trophyType - Trophy type
- * @returns {string} - Emoji
- */
-function getTrophyIcon(trophyType) {
-    const icons = {
-        platinum: '🏆',
-        gold: '🥇',
-        silver: '🥈',
-        bronze: '🥉'
-    };
-    
-    return icons[trophyType] || '🏅';
-} 
+}; 
