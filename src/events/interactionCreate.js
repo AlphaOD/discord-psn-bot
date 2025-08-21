@@ -88,8 +88,9 @@ module.exports = {
             logger.debug(`Button interaction: ${interaction.customId} by ${interaction.user.tag}`);
             
             try {
-                if (interaction.customId === 'link_continue_anyway') {
-                    await handleLinkContinueAnyway(interaction, logger);
+                if (interaction.customId.startsWith('link_continue_anyway:')) {
+                    const username = interaction.customId.split(':')[1];
+                    await handleLinkContinueAnyway(interaction, logger, username);
                 } else if (interaction.customId === 'link_cancel') {
                     await handleLinkCancel(interaction, logger);
                 } else {
@@ -305,7 +306,7 @@ async function handlePSNUsernameModal(interaction, logger) {
             const row = new ActionRowBuilder()
                 .addComponents(
                     new ButtonBuilder()
-                        .setCustomId('link_continue_anyway')
+                        .setCustomId(`link_continue_anyway:${username}`)
                         .setLabel('Continue Anyway')
                         .setStyle(ButtonStyle.Primary),
                     new ButtonBuilder()
@@ -349,28 +350,55 @@ async function handlePSNUsernameModal(interaction, logger) {
     }
 }
 
-async function handleLinkContinueAnyway(interaction, logger) {
+async function handleLinkContinueAnyway(interaction, logger, username) {
+    const { EmbedBuilder } = require('discord.js');
+    const Database = require('../database/database');
+    
     const discordUserId = interaction.user.id;
     
-    logger.info(`User ${discordUserId} chose to continue with link despite validation issues`);
+    logger.info(`User ${discordUserId} chose to continue with link for username: ${username}`);
     
     try {
-        // For now, we'll just acknowledge their choice
-        // In a full implementation, we could store the username anyway
-        const embed = new EmbedBuilder()
-            .setColor(0xFFA500)
-            .setTitle('⚠️ Link Proceeded with Caution')
-            .setDescription('You chose to proceed with linking despite validation limitations.')
-            .addFields(
-                { name: 'Status', value: 'Link request noted', inline: true },
-                { name: 'Recommendation', value: 'Please ensure your PSN username is correct', inline: true }
-            )
-            .setFooter({ text: 'Contact support if you encounter issues' });
+        // Check if user already exists
+        const existingUser = await Database.getUser(discordUserId);
+        if (existingUser) {
+            const alreadyLinkedEmbed = new EmbedBuilder()
+                .setColor(0xFFA500)
+                .setTitle('🔗 Account Already Linked')
+                .setDescription(`You are already linked to PSN username: **${existingUser.psn_username}**`)
+                .addFields(
+                    { name: 'Current PSN', value: existingUser.psn_username, inline: true },
+                    { name: 'Linked Since', value: new Date(existingUser.created_at).toLocaleDateString(), inline: true }
+                )
+                .setFooter({ text: 'Use /unlink to remove the current link, then /link again' });
+            
+            await interaction.reply({ embeds: [alreadyLinkedEmbed], ephemeral: true });
+            return;
+        }
         
-        await interaction.reply({ embeds: [embed], ephemeral: true });
+        // Create user with the username they provided
+        logger.info(`Creating user ${discordUserId} with PSN username: ${username}`);
+        const newUser = await Database.createUser(discordUserId, {
+            psn_username: username,
+            psn_account_id: null // We don't have the account ID without validation
+        });
+        
+        const successEmbed = new EmbedBuilder()
+            .setColor(0x00FF00)
+            .setTitle('✅ PSN Account Linked Successfully!')
+            .setDescription(`Your Discord account is now linked to PSN username: **${username}**`)
+            .addFields(
+                { name: 'PSN Username', value: username, inline: true },
+                { name: 'Account ID', value: 'N/A (unverified)', inline: true },
+                { name: 'Linked At', value: new Date().toLocaleString(), inline: true }
+            )
+            .setFooter({ text: 'You can now use /profile and /check commands! Note: Some features may be limited without full validation.' });
+        
+        await interaction.reply({ embeds: [successEmbed], ephemeral: true });
+        logger.info(`User ${discordUserId} successfully linked to PSN username: ${username}`);
         
     } catch (error) {
-        logger.error(`Error handling link continue: ${error.message}`);
+        logger.error(`Error handling link continue for user ${discordUserId}: ${error.message}`);
         await interaction.reply({ 
             content: '❌ Error processing your request', 
             ephemeral: true 
