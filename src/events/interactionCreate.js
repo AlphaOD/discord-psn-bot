@@ -143,21 +143,30 @@ module.exports = {
             
             try {
                 if (interaction.customId === 'psn_username_modal') {
+                    logger.info(`Processing PSN username modal for user ${interaction.user.tag}`);
                     await handlePSNUsernameModal(interaction);
+                    logger.info(`PSN username modal processed successfully for user ${interaction.user.tag}`);
+                } else {
+                    logger.warn(`Unknown modal submit interaction: ${interaction.customId}`);
                 }
                 
             } catch (error) {
                 logger.error(`Error handling modal submit ${interaction.customId}:`, error);
+                logger.error(`Error stack:`, error.stack);
                 
                 const errorMessage = {
                     content: '❌ There was an error processing your submission!',
                     flags: 64 // InteractionResponseFlags.Ephemeral
                 };
                 
-                if (interaction.replied || interaction.deferred) {
-                    await interaction.followUp(errorMessage);
-                } else {
-                    await interaction.reply(errorMessage);
+                try {
+                    if (interaction.replied || interaction.deferred) {
+                        await interaction.followUp(errorMessage);
+                    } else {
+                        await interaction.reply(errorMessage);
+                    }
+                } catch (replyError) {
+                    logger.error(`Failed to send error message to user:`, replyError);
                 }
             }
         }
@@ -218,11 +227,17 @@ async function handlePSNUsernameModal(interaction) {
     
     try {
         // Defer reply since validation might take time
+        logger.debug(`Deferring reply for user ${discordUserId}`);
         await interaction.deferReply({ ephemeral: true });
+        logger.debug(`Reply deferred successfully for user ${discordUserId}`);
         
         // Check if user already exists
+        logger.debug(`Checking if user ${discordUserId} already exists in database`);
         const existingUser = await Database.getUser(discordUserId);
+        logger.debug(`Database check result for user ${discordUserId}:`, existingUser ? 'exists' : 'not found');
+        
         if (existingUser) {
+            logger.info(`User ${discordUserId} already linked to PSN username: ${existingUser.psn_username}`);
             const alreadyLinkedEmbed = new EmbedBuilder()
                 .setColor(0xFFA500)
                 .setTitle('🔗 Account Already Linked')
@@ -234,25 +249,30 @@ async function handlePSNUsernameModal(interaction) {
                 .setFooter({ text: 'Use /unlink to remove the current link, then /link again' });
             
             await interaction.editReply({ embeds: [alreadyLinkedEmbed] });
+            logger.info(`Already linked message sent to user ${discordUserId}`);
             return;
         }
         
         // Initialize Real PSN API
+        logger.debug(`Initializing RealPSNApi for user ${discordUserId}`);
         const realPsnApi = new RealPSNApi();
         
         // Try to validate username with real PSN API
-        logger.info(`🔍 Attempting real PSN validation for: ${username}`);
+        logger.info(`🔍 Attempting real PSN validation for: ${username} (user ${discordUserId})`);
         const validationResult = await realPsnApi.validateUsername(username);
+        logger.debug(`Validation result for ${username}:`, validationResult);
         
         if (validationResult.isValid) {
             // Real validation succeeded!
-            logger.info(`✅ Real PSN validation successful for: ${username}`);
+            logger.info(`✅ Real PSN validation successful for: ${username} (user ${discordUserId})`);
             
             // Save user to database
+            logger.debug(`Saving user ${discordUserId} to database with username ${username}`);
             const newUser = await Database.createUser(discordUserId, {
                 psn_username: username,
                 psn_account_id: validationResult.accountId
             });
+            logger.info(`User ${discordUserId} saved to database successfully:`, newUser);
             
             const successEmbed = new EmbedBuilder()
                 .setColor(0x00FF00)
@@ -266,10 +286,11 @@ async function handlePSNUsernameModal(interaction) {
                 .setFooter({ text: 'You can now use /profile and /check commands!' });
             
             await interaction.editReply({ embeds: [successEmbed] });
+            logger.info(`Success message sent to user ${discordUserId}`);
             
         } else {
             // Real validation failed, show fallback option
-            logger.warn(`⚠️ Real PSN validation failed for: ${username}. Reason: ${validationResult.reason}`);
+            logger.warn(`⚠️ Real PSN validation failed for: ${username} (user ${discordUserId}). Reason: ${validationResult.reason}`);
             
             const fallbackEmbed = new EmbedBuilder()
                 .setColor(0xFFA500)
@@ -296,23 +317,34 @@ async function handlePSNUsernameModal(interaction) {
                 embeds: [fallbackEmbed], 
                 components: [row] 
             });
+            logger.info(`Fallback message with buttons sent to user ${discordUserId}`);
         }
         
     } catch (error) {
-        logger.error(`💥 Error in PSN username modal: ${error.message}`);
+        logger.error(`💥 Error in PSN username modal for user ${discordUserId}: ${error.message}`);
+        logger.error(`Error stack for user ${discordUserId}:`, error.stack);
         
-        const errorEmbed = new EmbedBuilder()
-            .setColor(0xFF0000)
-            .setTitle('❌ Modal Processing Failed')
-            .setDescription('An error occurred while processing your username submission.')
-            .addFields(
-                { name: 'Error', value: error.message, inline: false },
-                { name: 'Username', value: username, inline: true },
-                { name: 'Discord ID', value: discordUserId, inline: true }
-            )
-            .setFooter({ text: 'Please try again or contact support if the issue persists' });
-        
-        await interaction.editReply({ embeds: [errorEmbed] });
+        try {
+            const errorEmbed = new EmbedBuilder()
+                .setColor(0xFF0000)
+                .setTitle('❌ Modal Processing Failed')
+                .setDescription('An error occurred while processing your username submission.')
+                .addFields(
+                    { name: 'Error', value: error.message, inline: false },
+                    { name: 'Username', value: username || 'UNKNOWN', inline: true },
+                    { name: 'Discord ID', value: discordUserId, inline: true }
+                )
+                .setFooter({ text: 'Please try again or contact support if the issue persists' });
+            
+            if (interaction.deferred) {
+                await interaction.editReply({ embeds: [errorEmbed] });
+            } else {
+                await interaction.reply({ embeds: [errorEmbed], ephemeral: true });
+            }
+            logger.info(`Error message sent to user ${discordUserId}`);
+        } catch (replyError) {
+            logger.error(`Failed to send error message to user ${discordUserId}:`, replyError);
+        }
     }
 }
 
